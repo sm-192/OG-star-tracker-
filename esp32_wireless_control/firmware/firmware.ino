@@ -6,6 +6,7 @@
 #include <EEPROM.h>
 #include "config.h"
 #include "strings.h"
+#include "intervelometer.h"
 
 // try to update every time there is breaking change
 const int firmware_version = 6;
