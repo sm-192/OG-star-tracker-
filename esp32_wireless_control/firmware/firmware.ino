@@ -22,13 +22,13 @@ const String website_name = "www.tracker.com";
 const int dither_intensity = 5;
 #define MIN_CUSTOM_SLEW_RATE 2
 
-int slew_speed = 0, exposure_count = 0, exposure_duration = 0, dither_enabled = 0, focal_length = 0, pixel_size = 0, steps_per_10pixels = 0, direction = c_DIRECTION;
+int exposure_count = 0, exposure_duration = 0, dither_enabled = 0, focal_length = 0, pixel_size = 0, steps_per_10pixels = 0;
 float arcsec_per_pixel = 0.0;
 unsigned long blink_millis = 0;
 uint64_t exposure_delay = 0;
 
 //state variables
-bool s_slew_active = false, s_tracking_active = true, s_capturing = false;  //change s_tracking_active state to false if you want tracker to be OFF on power-up
+bool s_capturing = false;  //change s_tracking_active state to false if you want tracker to be OFF on power-up
 bool disable_tracking = false;
 int exposures_taken = 0;
 enum photo_control_state { ACTIVE,
@@ -39,6 +39,8 @@ volatile enum photo_control_state photo_control_status = INACTIVE;
 
 float direction_left_bias = 0.5, direction_right_bias = 0.5;
 int previous_direction = -1;
+
+
 
 //2 bytes occupied by each int
 //eeprom addresses
@@ -52,52 +54,52 @@ DNSServer dnsServer;
 
 
 void IRAM_ATTR timer_interval_ISR() {
-  Serial.println("----");
-  //intervalometer ISR
-  switch (photo_control_status) {
-    case ACTIVE:
-      exposures_taken++;
-      Serial.println("exposures_taken = " + String(exposures_taken) + "/" + String(exposure_count));
-      if (exposure_count == exposures_taken) {
-        Serial.println("State: Stopping intervalometer");
-        // no more images to capture, stop
-        disableIntervalometer();
-        exposure_count = 0;
-        s_capturing = false;
-        photo_control_status = INACTIVE;
+  // Serial.println("----");
+  // //intervalometer ISR
+  // switch (photo_control_status) {
+  //   case ACTIVE:
+  //     exposures_taken++;
+  //     Serial.println("exposures_taken = " + String(exposures_taken) + "/" + String(exposure_count));
+  //     if (exposure_count == exposures_taken) {
+  //       Serial.println("State: Stopping intervalometer");
+  //       // no more images to capture, stop
+  //       disableIntervalometer();
+  //       exposure_count = 0;
+  //       s_capturing = false;
+  //       photo_control_status = INACTIVE;
 
-        if (disable_tracking) {
-          s_tracking_active = false;
-          timerAlarmDisable(timer_tracking);
-        }
-      } else if (exposures_taken % 3 == 0 && dither_enabled) {
-        Serial.println("State: Dithering");
-        // user has active dithering and this is %3 image, stop capturing and run dither routine
-        photo_control_status = DITHER;
-        stopCapture();
-        timerStop(timer_interval);  //pause the timer, wait for dither to finish in main loop
-      } else {
-        Serial.println("State: Wait for next shot");
-        // run normally
-        timerWrite(timer_interval, exposure_delay);
-        stopCapture();
-        photo_control_status = DELAY;
-      }
-      break;
-    case DELAY:
-      Serial.println("State: Taking shot");
-      timerWrite(timer_interval, 0);
-      startCapture();
-      photo_control_status = ACTIVE;
-      break;
-  }
+  //       if (disable_tracking) {
+  //         s_tracking_active = false;
+  //         timerAlarmDisable(timer_tracking);
+  //       }
+  //     } else if (exposures_taken % 3 == 0 && dither_enabled) {
+  //       Serial.println("State: Dithering");
+  //       // user has active dithering and this is %3 image, stop capturing and run dither routine
+  //       photo_control_status = DITHER;
+  //       stopCapture();
+  //       timerStop(timer_interval);  //pause the timer, wait for dither to finish in main loop
+  //     } else {
+  //       Serial.println("State: Wait for next shot");
+  //       // run normally
+  //       timerWrite(timer_interval, exposure_delay);
+  //       stopCapture();
+  //       photo_control_status = DELAY;
+  //     }
+  //     break;
+  //   case DELAY:
+  //     Serial.println("State: Taking shot");
+  //     timerWrite(timer_interval, 0);
+  //     startCapture();
+  //     photo_control_status = ACTIVE;
+  //     break;
+  // }
 }
 
 // Handle requests to the root URL ("/")
 void handleRoot() {
   String formattedHtmlPage = String(html);
-  formattedHtmlPage.replace("%north%", (direction ? "selected" : ""));
-  formattedHtmlPage.replace("%south%", (!direction ? "selected" : ""));
+  formattedHtmlPage.replace("%north%", (ra_axis.trackingDirection ? "selected" : ""));
+  formattedHtmlPage.replace("%south%", (!ra_axis.trackingDirection ? "selected" : ""));
   formattedHtmlPage.replace("%dither%", (dither_enabled ? "checked" : ""));
   formattedHtmlPage.replace("%focallen%", String(focal_length).c_str());
   formattedHtmlPage.replace("%pixsize%", String((float)pixel_size / 100, 2).c_str());
@@ -106,131 +108,127 @@ void handleRoot() {
 
 void handleOn() {
   int tracking_speed = server.arg(TRACKING_SPEED).toInt();
+  Axis::TRACKING_RATES rate;
   switch (tracking_speed) {
     case 0:  //sidereal rate
-      tracking_rate = TRACKING_SIDEREAL;
+      rate = Axis::TRACKING_SIDEREAL;
       break;
     case 1:  //solar rate
-      tracking_rate = TRACKING_SOLAR;
+      rate = Axis::TRACKING_SOLAR;
       break;
     case 2:  //lunar rate
-      tracking_rate = TRACKING_LUNAR;
+      rate = Axis::TRACKING_LUNAR;
       break;
     default:
-      tracking_rate = TRACKING_SIDEREAL;
+      rate = Axis::TRACKING_SIDEREAL;
       break;
   }
-  direction = server.arg(DIRECTION).toInt();
-  s_tracking_active = true;
-  initTracking();
+  int direction = server.arg(DIRECTION).toInt();
+  ra_axis.startTracking(rate, direction);
+  server.send(200, MIME_TYPE_TEXT, TRACKING_ON);
 }
 
 void handleOff() {
-  s_tracking_active = false;
-  timerAlarmDisable(timer_tracking);
+  ra_axis.stopTracking();
   server.send(200, MIME_TYPE_TEXT, TRACKING_OFF);
 }
 
+
 void handleLeft() {
-  if (!s_slew_active) {  //if slew is not active - needed for ipad (passes multiple touchon events)
-    slew_speed = server.arg(SPEED).toInt();
+  if (!ra_axis.slewActive) {  //if slew is not active - needed for ipad (passes multiple touchon events)
+    int slew_speed = server.arg(SPEED).toInt();
     //limit custom slew speed to 2-400
     slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                                                                               : slew_speed;
-    initSlew(0);
+    ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, 0);
+    server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
 }
 
 void handleRight() {
-  if (!s_slew_active) {  //if slew is not active - needed for ipad (passes multiple touchon events)
-    slew_speed = server.arg(SPEED).toInt();
+  if (!ra_axis.slewActive) {  //if slew is not active - needed for ipad (passes multiple touchon events)
+    int slew_speed = server.arg(SPEED).toInt();
     //limit custom slew speed to 2-400
     slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                                                                               : slew_speed;
-    initSlew(1);  //reverse direction
+    ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, 1);
+    server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
 }
 
 void handleSlewOff() {
-  if (s_slew_active) {  //if slew is active needed for ipad (passes multiple touchoff events)
-    s_slew_active = false;
-    timerAlarmDisable(timer_web_timeout);
-    timerDetachInterrupt(timer_web_timeout);
-    timerEnd(timer_web_timeout);
-    timerAlarmDisable(timer_tracking);
-    initTracking();
+  if (ra_axis.slewActive) {  //if slew is active needed for ipad (passes multiple touchoff events)
+    ra_axis.stopSlew();
+    if (ra_axis.trackingActive) {
+      ra_axis.startTracking(ra_axis.tracking_rate, ra_axis.trackingDirection);
+    }
   }
 }
 
 void handleStartCapture() {
-  if (photo_control_status == INACTIVE) {
-    exposure_duration = server.arg(EXPOSURE).toInt();
-    exposure_count = server.arg(NUM_EXPOSURES).toInt();
-    dither_enabled = server.arg(DITHER_ENABLED).toInt();
-    focal_length = server.arg(FOCAL_LENGTH).toInt();
-    pixel_size = server.arg(PIXEL_SIZE).toInt();
-    disable_tracking = server.arg(DISABLE_TRACKING_ON_FINISH).toInt();
+  //   if (photo_control_status == INACTIVE) {
+  //     exposure_duration = server.arg(EXPOSURE).toInt();
+  //     exposure_count = server.arg(NUM_EXPOSURES).toInt();
+  //     dither_enabled = server.arg(DITHER_ENABLED).toInt();
+  //     focal_length = server.arg(FOCAL_LENGTH).toInt();
+  //     pixel_size = server.arg(PIXEL_SIZE).toInt();
+  //     disable_tracking = server.arg(DISABLE_TRACKING_ON_FINISH).toInt();
 
-    exposures_taken = 0;
+  //     exposures_taken = 0;
 
-    if ((exposure_duration == 0 || exposure_count == 0)) {
-      server.send(200, MIME_TYPE_TEXT, INVALID_EXPOSURE_VALUES);
-      return;
-    }
+  //     if ((exposure_duration == 0 || exposure_count == 0)) {
+  //       server.send(200, MIME_TYPE_TEXT, INVALID_EXPOSURE_VALUES);
+  //       return;
+  //     }
 
-    if (dither_enabled && (focal_length == 0 || pixel_size == 0)) {
-      server.send(200, MIME_TYPE_TEXT, INVALID_DITHER_VALUES);
-      return;
-    }
+  //     if (dither_enabled && (focal_length == 0 || pixel_size == 0)) {
+  //       server.send(200, MIME_TYPE_TEXT, INVALID_DITHER_VALUES);
+  //       return;
+  //     }
 
-    updateEEPROM(dither_enabled, focal_length, pixel_size);
-    arcsec_per_pixel = (((float)pixel_size / 100.0) / focal_length) * 206.265;        //div pixel size by 100 since we multiplied it by 100 in html page
-    steps_per_10pixels = (int)(((arcsec_per_pixel * 10.0) / arcsec_per_step) + 0.5);  //add 0.5 to round up float to nearest int while casting
-    Serial.println("steps per 10px: ");
-    Serial.println(steps_per_10pixels);
+  //     updateEEPROM(dither_enabled, focal_length, pixel_size);
+  //     arcsec_per_pixel = (((float)pixel_size / 100.0) / focal_length) * 206.265;        //div pixel size by 100 since we multiplied it by 100 in html page
+  //     steps_per_10pixels = (int)(((arcsec_per_pixel * 10.0) / arcsec_per_step) + 0.5);  //add 0.5 to round up float to nearest int while casting
+  //     Serial.println("steps per 10px: ");
+  //     Serial.println(steps_per_10pixels);
 
-    s_capturing = true;
-    photo_control_status = ACTIVE;
-    exposure_delay = ((exposure_duration - 3) * 2000);  // 3 sec delay
-    initIntervalometer();
-    server.send(200, MIME_TYPE_TEXT, CAPTURE_ON);
-  } else {
-    server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_ON);
-  }
+  //     s_capturing = true;
+  //     photo_control_status = ACTIVE;
+  //     exposure_delay = ((exposure_duration - 3) * 2000);  // 3 sec delay
+  //     initIntervalometer();
+  //     server.send(200, MIME_TYPE_TEXT, CAPTURE_ON);
+  //   } else {
+  //     server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_ON);
+  //   }
 }
 
 void handleAbortCapture() {
-  if (photo_control_status == INACTIVE) {
-    server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_OFF);
-    return;
-  }
+  //   if (photo_control_status == INACTIVE) {
+  //     server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_OFF);
+  //     return;
+  // }
 
-  disableIntervalometer();
-  exposure_count = 0;
-  exposure_duration = 0;
-  photo_control_status = INACTIVE;
-  server.send(200, MIME_TYPE_TEXT, CAPTURE_OFF);
-  s_capturing = false;
+  //   disableIntervalometer();
+  //   exposure_count = 0;
+  //   exposure_duration = 0;
+  //   photo_control_status = INACTIVE;
+  //   server.send(200, MIME_TYPE_TEXT, CAPTURE_OFF);
+  //   s_capturing = false;
 }
 
 void handleStatusRequest() {
-  if (s_slew_active) {
-    timerWrite(timer_web_timeout, 0);  //reset timer while slew on, prove still connected to web/app
+  if (ra_axis.slewActive) {
+    slewTimeOut.setCountValue(0);  //reset timeout counter
     server.send(200, MIME_TYPE_TEXT, SLEWING);
-  }
-  if (photo_control_status != INACTIVE) {
+  } else if (photo_control_status != INACTIVE) {
     char status[60];
     sprintf(status, CAPTURES_REMAINING, exposure_count - exposures_taken);
     server.send(200, MIME_TYPE_TEXT, status);
     return;
-  }
-
-  if (!s_tracking_active && photo_control_status == INACTIVE) {
+  } else if (!ra_axis.trackingActive && photo_control_status == INACTIVE) {
     server.send(200, MIME_TYPE_TEXT, IDLE);
     return;
-  }
-
-  if (s_tracking_active) {
+  } else if (ra_axis.trackingActive) {
     server.send(200, MIME_TYPE_TEXT, TRACKING_ON);
     return;
   }
@@ -273,100 +271,53 @@ void updateEEPROM(int dither, int focal_len, int pix_size) {
   EEPROM.commit();
 }
 
-void setMicrostep(int microstep) {
-  switch (microstep) {
-    case 8:
-      digitalWrite(MS1, LOW);
-      digitalWrite(MS2, LOW);
-      break;
-    case 16:
-      digitalWrite(MS1, HIGH);
-      digitalWrite(MS2, HIGH);
-      break;
-    case 32:
-      digitalWrite(MS1, HIGH);
-      digitalWrite(MS2, LOW);
-      break;
-    case 64:
-      digitalWrite(MS1, LOW);
-      digitalWrite(MS2, HIGH);
-      break;
-  }
-}
-
-void initSlew(int dir) {
-  s_slew_active = true;
-  timer_web_timeout = timerBegin(2, 40000, true);
-  timerAttachInterrupt(timer_web_timeout, &timer_web_timeout_ISR, true);
-  timerAlarmWrite(timer_web_timeout, 12000, true);  //12000 = 6 secs timeout, send status 5 sec poll (reset on poll)
-  timerAlarmEnable(timer_web_timeout);
-  server.send(200, MIME_TYPE_TEXT, SLEWING);
-  digitalWrite(AXIS1_DIR, dir);  //set slew direction
-  timerAlarmDisable(timer_tracking);
-  setMicrostep(8);
-  timerAlarmWrite(timer_tracking, (2 * tracking_rate) / slew_speed, true);  //2*tracking rate (16 mstep vs 8) / slew_speed = multiple of tracking rate
-  timerAlarmEnable(timer_tracking);
-}
-
-void initTracking() {
-  digitalWrite(AXIS1_DIR, direction);
-  setMicrostep(16);
-  timerAlarmWrite(timer_tracking, tracking_rate, true);
-  if (s_tracking_active) {
-    timerAlarmEnable(timer_tracking);
-    server.send(200, MIME_TYPE_TEXT, TRACKING_ON);
-  } else {
-    timerAlarmDisable(timer_tracking);
-    server.send(200, MIME_TYPE_TEXT, TRACKING_OFF);
-  }
-}
 
 void initIntervalometer() {
-  timer_interval = timerBegin(1, 40000, true);
-  timerAttachInterrupt(timer_interval, &timer_interval_ISR, true);
-  timerAlarmWrite(timer_interval, (exposure_duration * 2000), true);  //2000 because prescaler cant be more than 16bit, = 1sec ISR freq
-  timerAlarmEnable(timer_interval);
-  startCapture();
+  // timer_interval = timerBegin(1, 40000, true);
+  // timerAttachInterrupt(timer_interval, &timer_interval_ISR, true);
+  // timerAlarmWrite(timer_interval, (exposure_duration * 2000), true);  //2000 because prescaler cant be more than 16bit, = 1sec ISR freq
+  // timerAlarmEnable(timer_interval);
+  // startCapture();
 }
 
 void disableIntervalometer() {
-  stopCapture();
-  timerAlarmDisable(timer_interval);
-  timerDetachInterrupt(timer_interval);
-  timerEnd(timer_interval);
+  // stopCapture();
+  // timerAlarmDisable(timer_interval);
+  // timerDetachInterrupt(timer_interval);
+  // timerEnd(timer_interval);
 }
 
 void stopCapture() {
-  digitalWrite(INTERV_PIN, LOW);
+  // digitalWrite(INTERV_PIN, LOW);
 }
 
 void startCapture() {
-  digitalWrite(INTERV_PIN, HIGH);
+  // digitalWrite(INTERV_PIN, HIGH);
 }
 
 void ditherRoutine() {
-  int i = 0, j = 0;
-  timerAlarmDisable(timer_tracking);
-  int random_direction = biased_random_direction(previous_direction);
-  previous_direction = random_direction;
-  digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
-  delay(500);
+  // int i = 0, j = 0;
+  // timerAlarmDisable(timer_tracking);
+  // int random_direction = biased_random_direction(previous_direction);
+  // previous_direction = random_direction;
+  // digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
+  // delay(500);
 
-  for (i = 0; i < dither_intensity; i++) {
-    for (j = 0; j < steps_per_10pixels; j++) {
-      digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-      delay(10);
-      digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-      delay(10);
-    }
-  }
+  // for (i = 0; i < dither_intensity; i++) {
+  //   for (j = 0; j < steps_per_10pixels; j++) {
+  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
+  //     delay(10);
+  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
+  //     delay(10);
+  //   }
+  // }
 
-  delay(1000);
-  initTracking();
-  delay(3000);  //settling time after dither
+  // delay(1000);
+  // initTracking();
+  // delay(3000);  //settling time after dither
 }
 
- void setup() {
+void setup() {
   Serial.begin(115200);
   EEPROM.begin(512);  //SIZE = 6 bytes, 2 bytes for each variable
   //fetch values from EEPROM
@@ -437,13 +388,13 @@ void ditherRoutine() {
   digitalWrite(AXIS1_STEP, LOW);
   digitalWrite(EN12_n, LOW);
 
-  timer_tracking = timerBegin(0, 2, true);
-  timerAttachInterrupt(timer_tracking, &timer_tracking_ISR, true);
-  initTracking();
- }
+  // timer_tracking = timerBegin(0, 2, true);
+  // timerAttachInterrupt(timer_tracking, &timer_tracking_ISR, true);
+  // initTracking();
+}
 
- void loop() {
-  if (s_slew_active) {
+void loop() {
+  if (ra_axis.slewActive) {
     //blink status led if mount is in slew mode
     if (millis() - blink_millis >= 150) {
       digitalWrite(STATUS_LED, !digitalRead(STATUS_LED));
@@ -451,7 +402,7 @@ void ditherRoutine() {
     }
   } else {
     //turn on status led if sidereal tracking is ON
-    digitalWrite(STATUS_LED, (s_tracking_active == true));
+    digitalWrite(STATUS_LED, ra_axis.trackingActive);
   }
 
   if (photo_control_status == DITHER) {
@@ -484,4 +435,4 @@ int biased_random_direction(int previous_direction) {
   } else {
     return 1;
   }
- }
+}

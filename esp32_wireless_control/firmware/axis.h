@@ -5,6 +5,7 @@
 #include "config.h"
 #include <memory>
 
+extern HardwareTimer slewTimeOut;
 
 
 class Axis {
@@ -12,11 +13,11 @@ class Axis {
 
 public:
 #ifdef STEPPER_0_9
-  enum TRACKING_RATES { TRACKING_SIDEREAL = 2659383,               //SIDEREAL (23h,56 min)
+  static enum TRACKING_RATES { TRACKING_SIDEREAL = 2659383,               //SIDEREAL (23h,56 min)
                         TRACKING_SOLAR = 2666666,                  //SOLAR (24h)
                         TRACKING_LUNAR = 2723867 } tracking_rate;  //LUNAR (24h, 31 min)
 #else                                                              //stepper 1.8 deg
-  enum TRACKING_RATES { TRACKING_SIDEREAL = 5318765,               //SIDEREAL (23h,56 min)
+  static enum TRACKING_RATES { TRACKING_SIDEREAL = 5318765,               //SIDEREAL (23h,56 min)
                         TRACKING_SOLAR = 5333333,                  //SOLAR (24h)
                         TRACKING_LUNAR = 5447735 } tracking_rate;  //LUNAR (24h, 31 min)
 #endif
@@ -44,5 +45,8 @@ private:
   static const int MS1Pin = MS1;
   static const int MS2Pin = MS2;
 };
+
+extern Axis ra_axis;
+extern Axis dec_axis;
 
 #endif
