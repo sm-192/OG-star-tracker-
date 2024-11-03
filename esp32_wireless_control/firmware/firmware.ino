@@ -7,6 +7,8 @@
 #include "config.h"
 #include "strings.h"
 #include "intervelometer.h"
+#include "axis.h"
+#include "hardwaretimer.h"
 
 // try to update every time there is breaking change
 const int firmware_version = 6;
@@ -19,24 +21,6 @@ const char* password = "password123";  //change to your password, must be 8+ cha
 const String website_name = "www.tracker.com";
 const int dither_intensity = 5;
 #define MIN_CUSTOM_SLEW_RATE 2
-
-//Time b/w two rising edges should be 133.3333 ms
-//66.666x2  ms
-//sidereal rate = 0.00416 deg/s
-//for 80Mhz APB (TIMER frequency)
-#ifdef STEPPER_0_9
-enum tracking_rate_state { TRACKING_SIDEREAL = 2659383,  //SIDEREAL (23h,56 min)
-                           TRACKING_SOLAR = 2666666,     //SOLAR (24h)
-                           TRACKING_LUNAR = 2723867 };   //LUNAR (24h, 31 min)
-const int arcsec_per_step = 2;
-#else  //stepper 1.8 deg
-enum tracking_rate_state { TRACKING_SIDEREAL = 5318765,  //SIDEREAL (23h,56 min)
-                           TRACKING_SOLAR = 5333333,     //SOLAR (24h)
-                           TRACKING_LUNAR = 5447735 };   //LUNAR (24h, 31 min)
-const int arcsec_per_step = 4;
-#endif
-
-volatile enum tracking_rate_state tracking_rate = TRACKING_SIDEREAL;  //default to sidereal rate
 
 int slew_speed = 0, exposure_count = 0, exposure_duration = 0, dither_enabled = 0, focal_length = 0, pixel_size = 0, steps_per_10pixels = 0, direction = c_DIRECTION;
 float arcsec_per_pixel = 0.0;
@@ -65,18 +49,7 @@ int previous_direction = -1;
 
 WebServer server(80);
 DNSServer dnsServer;
-hw_timer_t* timer_tracking = NULL;     //for tracking and slewing rate
-hw_timer_t* timer_interval = NULL;     //for intervalometer control
-hw_timer_t* timer_web_timeout = NULL;  //for webclient timeout control
 
-void IRAM_ATTR timer_web_timeout_ISR() {
-  handleSlewOff();
-}
-
-void IRAM_ATTR timer_tracking_ISR() {
-  //tracking ISR
-  digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));  //toggle step pin at required frequency
-}
 
 void IRAM_ATTR timer_interval_ISR() {
   Serial.println("----");
@@ -393,7 +366,7 @@ void ditherRoutine() {
   delay(3000);  //settling time after dither
 }
 
-void setup() {
+ void setup() {
   Serial.begin(115200);
   EEPROM.begin(512);  //SIZE = 6 bytes, 2 bytes for each variable
   //fetch values from EEPROM
@@ -467,9 +440,9 @@ void setup() {
   timer_tracking = timerBegin(0, 2, true);
   timerAttachInterrupt(timer_tracking, &timer_tracking_ISR, true);
   initTracking();
-}
+ }
 
-void loop() {
+ void loop() {
   if (s_slew_active) {
     //blink status led if mount is in slew mode
     if (millis() - blink_millis >= 150) {
@@ -511,4 +484,4 @@ int biased_random_direction(int previous_direction) {
   } else {
     return 1;
   }
-}
+ }
