@@ -3,7 +3,7 @@
 
 /*****USER DEFINED*****/
 //AP mode by default: ESP32 will create a wifi network which you can connect to
-#define AP              //comment this line if you want ESP32 to connect to your existing wifi network/hotspot
+//#define AP              //comment this line if you want ESP32 to connect to your existing wifi network/hotspot
 #define c_DIRECTION 1   //1 is for north hemisphere and 0 for south hemisphere
 #define RA_INVERT_DIR_PIN 0  //if need to invert direction pin set to 1
 #define DEC_INVERT_DIR_PIN 0 //if need to invert direction pin set to 1

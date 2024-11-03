@@ -27,7 +27,6 @@ extern const char* INVALID_DITHER_VALUES;
 extern const char* MIME_TYPE_TEXT;
 extern const char* MIME_TYPE_HTML;
 
-
-extern const char* html;
+extern const char* html_content;
 
 #endif  // STRINGS_H

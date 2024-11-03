@@ -2,7 +2,7 @@
 #include "axis.h"
 
 Axis ra_axis(1, true, AXIS1_DIR, RA_INVERT_DIR_PIN);
-Axis dec_axis(2, false, AXIS2_DIR, DEC_INVERT_DIR_PIN);
+// Axis dec_axis(2, false, AXIS2_DIR, DEC_INVERT_DIR_PIN);
 
 volatile bool ra_axis_step_phase = 0;
 volatile bool dec_axis_step_phase = 0;
@@ -16,14 +16,14 @@ void IRAM_ATTR stepTimerRA_ISR() {
   }
 }
 
-void IRAM_ATTR stepTimerDEC_ISR() {
-  //tracking ISR
-  dec_axis_step_phase = !dec_axis_step_phase;
-  digitalWrite(AXIS2_STEP, dec_axis_step_phase);        //toggle step pin at required frequency
-  if (dec_axis_step_phase && dec_axis.counterActive) {  //if counter active
-    //dec_axis.direction ? dec_axis.axis_counter++ : dec_axis.axis_counter--; //TO_FIX
-  }
-}
+// void IRAM_ATTR stepTimerDEC_ISR() {
+//   //tracking ISR
+//   dec_axis_step_phase = !dec_axis_step_phase;
+//   digitalWrite(AXIS2_STEP, dec_axis_step_phase);        //toggle step pin at required frequency
+//   if (dec_axis_step_phase && dec_axis.counterActive) {  //if counter active
+//     //dec_axis.direction ? dec_axis.axis_counter++ : dec_axis.axis_counter--; //TO_FIX
+//   }
+// }
 
 void IRAM_ATTR slewTimeOutTimer_ISR() {
   //handleSlewOff();
@@ -42,18 +42,16 @@ Axis::Axis(int axis, bool defaultTrackingOn, int dirPinforAxis, bool invertDirPi
     case 1:
       stepTimer.attachInterupt(&stepTimerRA_ISR);
       break;
-    case 2:
-      stepTimer.attachInterupt(&stepTimerDEC_ISR);
-      break;
+    // case 2:
+    //   stepTimer.attachInterupt(&stepTimerDEC_ISR);
+    //   break;
   }
 
   // if (defaultTrackingOn && axisNumber == 1) {
   //   startTracking(TRACKING_SIDEREAL);
   // }
 }
-void Axis::setDirection(bool directionArg) {
-  digitalWrite(dirPin, directionArg ^ invertDirectionPin);
-}
+
 
 void Axis::startTracking(TRACKING_RATES rate, bool directionArg) {
   tracking_rate = rate;
@@ -69,6 +67,7 @@ void Axis::stopTracking() {
   trackingActive = false;
   stepTimer.stop();
 }
+
 void Axis::startSlew(uint64_t rate, bool directionArg) {
   slewDirection = directionArg;
   setDirection(slewDirection);
@@ -86,6 +85,10 @@ void Axis::stopSlew() {
   if (trackingActive) {
     startTracking(tracking_rate, trackingDirection);
   }
+}
+
+void Axis::setDirection(bool directionArg) {
+  digitalWrite(dirPin, directionArg ^ invertDirectionPin);
 }
 
 void Axis::setMicrostep(int microstep) {

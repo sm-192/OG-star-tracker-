@@ -15,8 +15,10 @@ const int firmware_version = 6;
 
 // Set your Wi-Fi credentials
 const byte DNS_PORT = 53;
-const char* ssid = "OG Star Tracker";  //change to your SSID
-const char* password = "password123";  //change to your password, must be 8+ characters
+//const char* ssid = "OG Star Tracker";  //change to your SSID
+//const char* password = "password123";  //change to your password, must be 8+ characters
+const char* ssid = "NowhereNet";  //change to your SSID
+const char* password = "Ilove69dogsand34*cats";  //change to your password, must be 8+ characters
 //If you are using AP mode, you can access the website using the below URL
 const String website_name = "www.tracker.com";
 const int dither_intensity = 5;
@@ -97,9 +99,9 @@ void IRAM_ATTR timer_interval_ISR() {
 
 // Handle requests to the root URL ("/")
 void handleRoot() {
-  String formattedHtmlPage = String(html);
-  formattedHtmlPage.replace("%north%", (ra_axis.trackingDirection ? "selected" : ""));
-  formattedHtmlPage.replace("%south%", (!ra_axis.trackingDirection ? "selected" : ""));
+  String formattedHtmlPage = String(html_content);
+  formattedHtmlPage.replace("%north%", (!ra_axis.trackingDirection ? "selected" : ""));
+  formattedHtmlPage.replace("%south%", (ra_axis.trackingDirection ? "selected" : ""));
   formattedHtmlPage.replace("%dither%", (dither_enabled ? "checked" : ""));
   formattedHtmlPage.replace("%focallen%", String(focal_length).c_str());
   formattedHtmlPage.replace("%pixsize%", String((float)pixel_size / 100, 2).c_str());
@@ -108,19 +110,19 @@ void handleRoot() {
 
 void handleOn() {
   int tracking_speed = server.arg(TRACKING_SPEED).toInt();
-  Axis::TRACKING_RATES rate;
+  TRACKING_RATES rate;
   switch (tracking_speed) {
     case 0:  //sidereal rate
-      rate = Axis::TRACKING_SIDEREAL;
+      rate = TRACKING_SIDEREAL;
       break;
     case 1:  //solar rate
-      rate = Axis::TRACKING_SOLAR;
+      rate = TRACKING_SOLAR;
       break;
     case 2:  //lunar rate
-      rate = Axis::TRACKING_LUNAR;
+      rate = TRACKING_LUNAR;
       break;
     default:
-      rate = Axis::TRACKING_SIDEREAL;
+      rate = TRACKING_SIDEREAL;
       break;
   }
   int direction = server.arg(DIRECTION).toInt();
