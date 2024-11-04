@@ -1,5 +1,5 @@
-// Strings.cpp
-#include "strings.h"
+// website_strings.cpp
+#include "website_strings.h"
 
 const char* TRACKING_ON = "Tracking ON";
 const char* TRACKING_OFF = "Tracking OFF";
@@ -25,7 +25,7 @@ const char* INVALID_DITHER_VALUES = "Invalid Dither Settings!";
 
 const char* MIME_TYPE_TEXT = "text/plain";
 const char* MIME_TYPE_HTML = "text/html";
-
+// name change due to conflict in Arduino ESP32 v3.x
 const char* html_content = "<DOCTYPE html> \n"
                            "<html lang=\"en\"> \n"
                            "<head> \n"

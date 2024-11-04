@@ -1,6 +1,6 @@
-// strings.h
-#ifndef STRINGS_H
-#define STRINGS_H
+// website_strings.h // name change due to conflict in Arduino ESP32 v3.x
+#ifndef WEBSITE_STRINGS_H 
+#define WEBSITE_STRINGS_H
 
 extern const char* TRACKING_ON;
 extern const char* TRACKING_OFF;
@@ -27,6 +27,6 @@ extern const char* INVALID_DITHER_VALUES;
 extern const char* MIME_TYPE_TEXT;
 extern const char* MIME_TYPE_HTML;
 
-extern const char* html_content;
+extern const char* html_content; // name change due to conflict in Arduino ESP32 v3.x
 
 #endif  // STRINGS_H
