@@ -1,3 +1,4 @@
+#include <cstdint>
 #ifndef AXIS_H
 #define AXIS_H
 
@@ -23,7 +24,7 @@ class Axis {
 
 public:
 
-  Axis(int axisNumber, bool defaultTrackingOn, int dirPinforAxis, bool invertDirPin);
+  Axis(uint8_t axisNumber, bool defaultTrackingOn, uint8_t dirPinforAxis, bool invertDirPin);
   void startTracking(TRACKING_RATES rate, bool directionArg);
   void stopTracking();
   void startSlew(uint64_t rate, bool directionArg);
@@ -39,15 +40,15 @@ public:
 
 private:
   void setDirection(bool directionArg);
-  static void setMicrostep(int microstep);
+  static void setMicrostep(uint8_t microstep);
   HardwareTimer stepTimer;
-  int stepPin;
-  int dirPin;
-  int axisNumber;
+  uint8_t stepPin;
+  uint8_t dirPin;
+  uint8_t axisNumber;
   bool invertDirectionPin;
   bool trackingDirection;
-  static const int MS1Pin = MS1;
-  static const int MS2Pin = MS2;
+  static const uint8_t MS1Pin = MS1;
+  static const uint8_t MS2Pin = MS2;
 };
 
 extern Axis ra_axis;

@@ -32,7 +32,7 @@ void IRAM_ATTR slewTimeOutTimer_ISR() {
 HardwareTimer slewTimeOut(2000, &slewTimeOutTimer_ISR);
 
 
-Axis::Axis(int axis, bool defaultTrackingOn, int dirPinforAxis, bool invertDirPin) : stepTimer(40000000) {
+Axis::Axis(uint8_t axis, bool defaultTrackingOn, uint8_t dirPinforAxis, bool invertDirPin) : stepTimer(40000000) {
   axisNumber = axis;
   trackingDirection = c_DIRECTION;
   dirPin = dirPinforAxis;
@@ -91,7 +91,7 @@ void Axis::setDirection(bool directionArg) {
   digitalWrite(dirPin, directionArg ^ invertDirectionPin);
 }
 
-void Axis::setMicrostep(int microstep) {
+void Axis::setMicrostep(uint8_t microstep) {
   switch (microstep) {
     case 8:
       digitalWrite(MS1, LOW);
