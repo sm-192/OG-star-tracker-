@@ -28,29 +28,29 @@ public:
   void stopTracking();
   void startSlew(uint64_t rate, bool directionArg);
   void stopSlew();
-  void setDirection(bool directionArg);
-  static void setMicrostep(int microstep);
-  
   volatile int64_t axis_counter;
   bool slewActive;
   bool trackingActive;
-  volatile bool trackingDirection;
-  bool slewDirection;
-  bool invertDirectionPin;
+  volatile bool axisAbsoluteDirection;
   volatile bool counterActive;
-  int axisNumber;
+
 
   TRACKING_RATES tracking_rate;
 
 private:
+  void setDirection(bool directionArg);
+  static void setMicrostep(int microstep);
   HardwareTimer stepTimer;
   int stepPin;
   int dirPin;
+  int axisNumber;
+  bool invertDirectionPin;
+  bool trackingDirection;
   static const int MS1Pin = MS1;
   static const int MS2Pin = MS2;
 };
 
 extern Axis ra_axis;
-// extern Axis dec_axis;
+extern Axis dec_axis;
 
 #endif

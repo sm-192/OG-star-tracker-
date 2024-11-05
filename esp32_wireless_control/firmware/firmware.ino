@@ -98,8 +98,8 @@ void IRAM_ATTR timer_interval_ISR() {
 // Handle requests to the root URL ("/")
 void handleRoot() {
   String formattedHtmlPage = String(html_content);
-  formattedHtmlPage.replace("%north%", (!ra_axis.trackingDirection ? "selected" : ""));
-  formattedHtmlPage.replace("%south%", (ra_axis.trackingDirection ? "selected" : ""));
+  formattedHtmlPage.replace("%north%", (c_DIRECTION ? "selected" : ""));
+  formattedHtmlPage.replace("%south%", (!c_DIRECTION ? "selected" : ""));
   formattedHtmlPage.replace("%dither%", (dither_enabled ? "checked" : ""));
   formattedHtmlPage.replace("%focallen%", String(focal_length).c_str());
   formattedHtmlPage.replace("%pixsize%", String((float)pixel_size / 100, 2).c_str());
@@ -159,9 +159,6 @@ void handleRight() {
 void handleSlewOff() {
   if (ra_axis.slewActive) {  //if slew is active needed for ipad (passes multiple touchoff events)
     ra_axis.stopSlew();
-    if (ra_axis.trackingActive) {
-      ra_axis.startTracking(ra_axis.tracking_rate, ra_axis.trackingDirection);
-    }
   }
 }
 
