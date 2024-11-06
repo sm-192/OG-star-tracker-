@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 #include "config.h"
 #include "website_strings.h"
-#include "intervelometer.h"
+#include "intervalometer.h"
 #include "axis.h"
 #include "hardwaretimer.h"
 
