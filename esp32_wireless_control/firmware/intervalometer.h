@@ -31,7 +31,7 @@ class Intervalometer {
               DAY_TIME_LAPSE_PAN };
 
   struct Settings {           //20 bytes
-    Mode mode;
+    Mode mode;                
     uint16_t exposures;       //2b
     uint16_t delay_time;      //seconds, max limt 18 h, 12 mins //2b
     uint16_t pre_delay_time;  //seconds //2b

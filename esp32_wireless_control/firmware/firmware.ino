@@ -22,78 +22,18 @@ const String website_name = "www.tracker.com";
 const int dither_intensity = 5;
 #define MIN_CUSTOM_SLEW_RATE 2
 
-int exposure_count = 0, exposure_duration = 0, dither_enabled = 0, focal_length = 0, pixel_size = 0, steps_per_10pixels = 0;
 float arcsec_per_pixel = 0.0;
 unsigned long blink_millis = 0;
-uint64_t exposure_delay = 0;
 
-//state variables
-bool s_capturing = false;  //change s_tracking_active state to false if you want tracker to be OFF on power-up
-bool disable_tracking = false;
-int exposures_taken = 0;
-enum photo_control_state { ACTIVE,
-                           DELAY,
-                           DITHER,
-                           INACTIVE };
-volatile enum photo_control_state photo_control_status = INACTIVE;
 
 float direction_left_bias = 0.5, direction_right_bias = 0.5;
 int previous_direction = -1;
 
 
-
-//2 bytes occupied by each int
-//eeprom addresses
-#define DITHER_ADDR 1
-#define FOCAL_LEN_ADDR 3
-#define PIXEL_SIZE_ADDR 5
 #define DITHER_PIXELS 30  //how many pixels to dither
 
 WebServer server(80);
 DNSServer dnsServer;
-
-
-void IRAM_ATTR timer_interval_ISR() {
-  // Serial.println("----");
-  // //intervalometer ISR
-  // switch (photo_control_status) {
-  //   case ACTIVE:
-  //     exposures_taken++;
-  //     Serial.println("exposures_taken = " + String(exposures_taken) + "/" + String(exposure_count));
-  //     if (exposure_count == exposures_taken) {
-  //       Serial.println("State: Stopping intervalometer");
-  //       // no more images to capture, stop
-  //       disableIntervalometer();
-  //       exposure_count = 0;
-  //       s_capturing = false;
-  //       photo_control_status = INACTIVE;
-
-  //       if (disable_tracking) {
-  //         s_tracking_active = false;
-  //         timerAlarmDisable(timer_tracking);
-  //       }
-  //     } else if (exposures_taken % 3 == 0 && dither_enabled) {
-  //       Serial.println("State: Dithering");
-  //       // user has active dithering and this is %3 image, stop capturing and run dither routine
-  //       photo_control_status = DITHER;
-  //       stopCapture();
-  //       timerStop(timer_interval);  //pause the timer, wait for dither to finish in main loop
-  //     } else {
-  //       Serial.println("State: Wait for next shot");
-  //       // run normally
-  //       timerWrite(timer_interval, exposure_delay);
-  //       stopCapture();
-  //       photo_control_status = DELAY;
-  //     }
-  //     break;
-  //   case DELAY:
-  //     Serial.println("State: Taking shot");
-  //     timerWrite(timer_interval, 0);
-  //     startCapture();
-  //     photo_control_status = ACTIVE;
-  //     break;
-  // }
-}
 
 // Handle requests to the root URL ("/")
 void handleRoot() {
@@ -163,57 +103,14 @@ void handleSlewOff() {
 }
 
 void handleStartCapture() {
-  //   if (photo_control_status == INACTIVE) {
-  //     exposure_duration = server.arg(EXPOSURE).toInt();
-  //     exposure_count = server.arg(NUM_EXPOSURES).toInt();
-  //     dither_enabled = server.arg(DITHER_ENABLED).toInt();
-  //     focal_length = server.arg(FOCAL_LENGTH).toInt();
-  //     pixel_size = server.arg(PIXEL_SIZE).toInt();
-  //     disable_tracking = server.arg(DISABLE_TRACKING_ON_FINISH).toInt();
-
-  //     exposures_taken = 0;
-
-  //     if ((exposure_duration == 0 || exposure_count == 0)) {
-  //       server.send(200, MIME_TYPE_TEXT, INVALID_EXPOSURE_VALUES);
-  //       return;
-  //     }
-
-  //     if (dither_enabled && (focal_length == 0 || pixel_size == 0)) {
-  //       server.send(200, MIME_TYPE_TEXT, INVALID_DITHER_VALUES);
-  //       return;
-  //     }
-
-  //     updateEEPROM(dither_enabled, focal_length, pixel_size);
-  //     arcsec_per_pixel = (((float)pixel_size / 100.0) / focal_length) * 206.265;        //div pixel size by 100 since we multiplied it by 100 in html page
-  //     steps_per_10pixels = (int)(((arcsec_per_pixel * 10.0) / arcsec_per_step) + 0.5);  //add 0.5 to round up float to nearest int while casting
-  //     Serial.println("steps per 10px: ");
-  //     Serial.println(steps_per_10pixels);
-
-  //     s_capturing = true;
-  //     photo_control_status = ACTIVE;
-  //     exposure_delay = ((exposure_duration - 3) * 2000);  // 3 sec delay
-  //     initIntervalometer();
-  //     server.send(200, MIME_TYPE_TEXT, CAPTURE_ON);
-  //   } else {
-  //     server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_ON);
-  //   }
+ 
 }
 
 void handleAbortCapture() {
-  //   if (photo_control_status == INACTIVE) {
-  //     server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_OFF);
-  //     return;
-  // }
 
-  //   disableIntervalometer();
-  //   exposure_count = 0;
-  //   exposure_duration = 0;
-  //   photo_control_status = INACTIVE;
-  //   server.send(200, MIME_TYPE_TEXT, CAPTURE_OFF);
-  //   s_capturing = false;
 }
 
-void handleStatusRequest() {
+void handleStatusRequest() { //tosort
   if (ra_axis.slewActive) {
     slewTimeOut.setCountValue(0);  //reset timeout counter
     server.send(200, MIME_TYPE_TEXT, SLEWING);
@@ -243,69 +140,9 @@ void handleVersion() {
   server.send(200, MIME_TYPE_TEXT, (String)firmware_version);
 }
 
-void writeEEPROM(int address, int value) {
-  byte high = value >> 8;
-  byte low = value & 0xFF;
-  EEPROM.write(address, high);
-  EEPROM.write(address + 1, low);
-}
-
-int readEEPROM(int address) {
-  byte high = EEPROM.read(address);
-  byte low = EEPROM.read(address + 1);
-  return ((high << 8) + low);
-}
-
-void updateEEPROM(int dither, int focal_len, int pix_size) {
-  if (readEEPROM(DITHER_ADDR) != dither) {
-    writeEEPROM(DITHER_ADDR, dither);
-    //Serial.println("dither updated");
-  }
-  if (readEEPROM(FOCAL_LEN_ADDR) != focal_len) {
-    writeEEPROM(FOCAL_LEN_ADDR, focal_len);
-    //Serial.println("focal length updated");
-  }
-  if (readEEPROM(PIXEL_SIZE_ADDR) != pix_size) {
-    writeEEPROM(PIXEL_SIZE_ADDR, pix_size);
-    //Serial.println("pix size updated");
-  }
-  EEPROM.commit();
-}
-
-
-
-
-
-void ditherRoutine() {
-  // int i = 0, j = 0;
-  // timerAlarmDisable(timer_tracking);
-  // int random_direction = biased_random_direction(previous_direction);
-  // previous_direction = random_direction;
-  // digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
-  // delay(500);
-
-  // for (i = 0; i < dither_intensity; i++) {
-  //   for (j = 0; j < steps_per_10pixels; j++) {
-  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-  //     delay(10);
-  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-  //     delay(10);
-  //   }
-  // }
-
-  // delay(1000);
-  // initTracking();
-  // delay(3000);  //settling time after dither
-}
-
 void setup() {
   Serial.begin(115200);
-  EEPROM.begin(512);  //SIZE = 6 bytes, 2 bytes for each variable
-  //fetch values from EEPROM
-  dither_enabled = readEEPROM(DITHER_ADDR);
-  focal_length = readEEPROM(FOCAL_LEN_ADDR);
-  pixel_size = readEEPROM(PIXEL_SIZE_ADDR);
-
+  
 #ifdef AP
   WiFi.mode(WIFI_MODE_AP);
   WiFi.softAP(ssid, password);
@@ -369,9 +206,6 @@ void setup() {
   digitalWrite(AXIS1_STEP, LOW);
   digitalWrite(EN12_n, LOW);
 
-  // timer_tracking = timerBegin(0, 2, true);
-  // timerAttachInterrupt(timer_tracking, &timer_tracking_ISR, true);
-  // initTracking();
 }
 
 void loop() {
@@ -386,34 +220,10 @@ void loop() {
     digitalWrite(STATUS_LED, ra_axis.trackingActive);
   }
 
-  if (photo_control_status == DITHER) {
-    //disableIntervalometer();
-    ditherRoutine();
-    photo_control_status = ACTIVE;
-    //initIntervalometer();
+  if (intervalometer.intervalometerActive) {
+    intervalometer.run();
   }
+
   server.handleClient();
   dnsServer.processNextRequest();
-}
-
-// when tracker moves left, next time its 5% higher chance tracked will move right
-// with this tracker should keep in the middle in average
-int biased_random_direction(int previous_direction) {
-  // Adjust probabilities based on previous selection
-  if (previous_direction == 0) {
-    direction_left_bias = 0.45;   // Lower probability for 0
-    direction_right_bias = 0.55;  // Higher probability for 1
-  }
-  if (previous_direction == 1) {
-    direction_left_bias = 0.55;   // Higher probability for 0
-    direction_right_bias = 0.45;  // Lower probability for 1
-  }
-
-  float rand_val = random(100) / 100.0;  // random number between 0.00 and 0.99
-
-  if (rand_val < direction_left_bias) {
-    return 0;
-  } else {
-    return 1;
-  }
 }

@@ -17,6 +17,7 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   readPresetsFromEEPROM();
   timerStarted = false;
   triggerPin = triggerPinArg;
+  EEPROM.begin(512);  //SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
 }
 
 /* MODES:
@@ -161,11 +162,57 @@ void Intervalometer::runDither() {
   //pass
 }
 
+void ditherRoutine() {
+  // int i = 0, j = 0;
+  // timerAlarmDisable(timer_tracking);
+  // int random_direction = biased_random_direction(previous_direction);
+  // previous_direction = random_direction;
+  // digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
+  // delay(500);
+
+  // for (i = 0; i < dither_intensity; i++) {
+  //   for (j = 0; j < steps_per_10pixels; j++) {
+  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
+  //     delay(10);
+  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
+  //     delay(10);
+  //   }
+  // }
+
+  // delay(1000);
+  // initTracking();
+  // delay(3000);  //settling time after dither
+}
+
+// when tracker moves left, next time its 5% higher chance tracked will move right
+// with this tracker should keep in the middle in average
+int biased_random_direction(int previous_direction) {
+  // // Adjust probabilities based on previous selection
+  // if (previous_direction == 0) {
+  //   direction_left_bias = 0.45;   // Lower probability for 0
+  //   direction_right_bias = 0.55;  // Higher probability for 1
+  // }
+  // if (previous_direction == 1) {
+  //   direction_left_bias = 0.55;   // Higher probability for 0
+  //   direction_right_bias = 0.45;  // Lower probability for 1
+  // }
+
+  // float rand_val = random(100) / 100.0;  // random number between 0.00 and 0.99
+
+  // if (rand_val < direction_left_bias) {
+  //   return 0;
+  // } else {
+  //   return 1;
+  // }
+}
+
 template<class T> int Intervalometer::writeObjectToEEPROM(int address, const T& object) {
   const byte* p = (const byte*)(const void*)&object;
   unsigned int i;
-  for (i = 0; i < sizeof(object); i++)
+  for (i = 0; i < sizeof(object); i++) {
     EEPROM.write(address++, *p++);
+  }
+  EEPROM.commit();
   return i;
 }
 
