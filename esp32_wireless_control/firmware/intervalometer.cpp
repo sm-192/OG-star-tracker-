@@ -19,6 +19,13 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   triggerPin = triggerPinArg;
 }
 
+/* MODES:
+LONG_EXPOSURE_STILL: Predelay>(Internal Timed Capture>Dither?>Delay (x exposures)) (with tracking)
+LONG_EXPOSURE_MOVIE: (Predelay>(Internal Timed Capture>Dither?>Delay (x exposures))>rewind axis (x frames)) (with tracking)
+DAY_TIME_LAPSE: Predelay>(Camera Capture>delay (x exposures)) (no tracking)
+DAY_TIME_LAPSE_PAN: Predelay>(Camera Capture>pan deg>delay (x exposures)) (no tracking)
+*/
+
 void Intervalometer::run() {
   switch (currentState) {
     case INACTIVE:
@@ -52,7 +59,11 @@ void Intervalometer::run() {
     case CAPTURE:  //add capture for day time
 
       if (!timerStarted) {
-        ra_axis.counterActive = currentSettings.mode == LONG_EXPOSURE_MOVIE ? true : false;
+        if (currentSettings.mode == LONG_EXPOSURE_MOVIE) {
+          ra_axis.resetAxisCount();
+          ra_axis.counterActive = true;
+        }
+        
         digitalWrite(triggerPin, HIGH);
         intervalometerTimer.start(2000 * currentSettings.exposure_time, false);
         timerStarted = true;
@@ -73,7 +84,17 @@ void Intervalometer::run() {
       }
       break;
     case PAN:
-      //work out steps and axis timer preset count
+      if (!ra_axis.goToTarget) {
+      uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.pan_angle);
+      int64_t stepsToMove = currentSettings.panDirection ? arcSecsToMove/ARCSEC_PER_STEP : (arcSecsToMove/ARCSEC_PER_STEP)*-1;
+      ra_axis.resetAxisCount();
+      ra_axis.setAxisTargetCount(stepsToMove);
+      ra_axis.counterActive = ra_axis.goToTarget = true;      
+      ra_axis.startSlew(ra_axis.tracking_rate/5, currentSettings.panDirection); //pan at 10x tracking rate
+      } 
+      if (!ra_axis.slewActive) {
+        currentState = DELAY;
+      }
       break;
     case DELAY:
       if (exposures_taken >= currentSettings.exposures) {
