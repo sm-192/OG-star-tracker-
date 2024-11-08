@@ -30,11 +30,15 @@ public:
   void startSlew(uint64_t rate, bool directionArg);
   void stopSlew();
   volatile int64_t axis_counter;
+  volatile int64_t target_count;
+  volatile bool goToTarget;
   bool slewActive;
   bool trackingActive;
   volatile bool axisAbsoluteDirection;
+  bool trackingDirection;
   volatile bool counterActive;
-
+  void setAxisTargetCount(int64_t count);
+  void resetAxisCount();
 
   TRACKING_RATES tracking_rate;
 
@@ -46,7 +50,6 @@ private:
   uint8_t dirPin;
   uint8_t axisNumber;
   bool invertDirectionPin;
-  bool trackingDirection;
   static const uint8_t MS1Pin = MS1;
   static const uint8_t MS2Pin = MS2;
 };

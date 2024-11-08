@@ -235,6 +235,10 @@ void handleStatusRequest() {
   // TODO add detection for capturing
 }
 
+void sendError(String errorMessage) {
+  server.send(204, MIME_TYPE_TEXT, errorMessage);
+}
+
 void handleVersion() {
   server.send(200, MIME_TYPE_TEXT, (String)firmware_version);
 }
@@ -269,28 +273,8 @@ void updateEEPROM(int dither, int focal_len, int pix_size) {
 }
 
 
-void initIntervalometer() {
-  // timer_interval = timerBegin(1, 40000, true);
-  // timerAttachInterrupt(timer_interval, &timer_interval_ISR, true);
-  // timerAlarmWrite(timer_interval, (exposure_duration * 2000), true);  //2000 because prescaler cant be more than 16bit, = 1sec ISR freq
-  // timerAlarmEnable(timer_interval);
-  // startCapture();
-}
 
-void disableIntervalometer() {
-  // stopCapture();
-  // timerAlarmDisable(timer_interval);
-  // timerDetachInterrupt(timer_interval);
-  // timerEnd(timer_interval);
-}
 
-void stopCapture() {
-  // digitalWrite(INTERV_PIN, LOW);
-}
-
-void startCapture() {
-  // digitalWrite(INTERV_PIN, HIGH);
-}
 
 void ditherRoutine() {
   // int i = 0, j = 0;
@@ -403,10 +387,10 @@ void loop() {
   }
 
   if (photo_control_status == DITHER) {
-    disableIntervalometer();
+    //disableIntervalometer();
     ditherRoutine();
     photo_control_status = ACTIVE;
-    initIntervalometer();
+    //initIntervalometer();
   }
   server.handleClient();
   dnsServer.processNextRequest();
