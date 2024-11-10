@@ -37,7 +37,7 @@ class Intervalometer {
     uint16_t pre_delay_time;  //seconds //2b
     uint16_t exposure_time;   //seconds, max limt 18 h, 12 mins //2b
     float pan_angle;          //degrees //4b
-    uint8_t panDirection; //
+    bool panDirection; //
     bool dither;              //1b
     uint8_t dither_frequency; //
     bool post_tracking_on;    //1b
@@ -71,6 +71,7 @@ private:
   template<class T> int writeObjectToEEPROM(int address, const T& object);
   template<class T> int readObjectFromEEPROM(int address, T& object);
   void runDither();
+  int biased_random_direction(int previous_direction);
 };
 
 extern Intervalometer intervalometer;

@@ -1,5 +1,3 @@
-#include "esp32-hal-timer.h"
-
 #include "hardwaretimer.h"
 
 

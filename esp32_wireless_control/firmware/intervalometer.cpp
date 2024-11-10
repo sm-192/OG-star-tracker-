@@ -1,4 +1,3 @@
-#include "esp32-hal-gpio.h"
 #include "intervalometer.h"
 
 Intervalometer intervalometer(INTERV_PIN);
@@ -11,13 +10,26 @@ void intervalometer_ISA() {
 
 Intervalometer::Intervalometer(uint8_t triggerPinArg)
   : intervalometerTimer(2000, intervalometer_ISA) {  //2kHz resolution of 0.5 ms
+  EEPROM.begin(512);                                 //SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
   currentState = INACTIVE;
   nextState = false;
   intervalometerActive = false;
   readPresetsFromEEPROM();
   timerStarted = false;
   triggerPin = triggerPinArg;
-  EEPROM.begin(512);  //SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
+  currentSettings.mode = LONG_EXPOSURE_STILL;
+  currentSettings.exposures = 1;
+  currentSettings.delay_time = 1;
+  currentSettings.pre_delay_time = 1;
+  currentSettings.exposure_time = 1;
+  currentSettings.pan_angle = 0.0;
+  currentSettings.panDirection = true;
+  currentSettings.dither = false;
+  currentSettings.dither_frequency = 1;
+  currentSettings.post_tracking_on = false;
+  currentSettings.frames = 1;
+  currentSettings.pixel_size = 1.0;
+  currentSettings.focal_length = 1;
 }
 
 /* MODES:
@@ -64,7 +76,7 @@ void Intervalometer::run() {
           ra_axis.resetAxisCount();
           ra_axis.counterActive = true;
         }
-        
+
         digitalWrite(triggerPin, HIGH);
         intervalometerTimer.start(2000 * currentSettings.exposure_time, false);
         timerStarted = true;
@@ -80,19 +92,19 @@ void Intervalometer::run() {
       break;
     case DITHER:
       if (exposures_taken % currentSettings.dither_frequency == 0) {
-        runDither(); //program dither.
+        runDither();  //program dither.
         currentState = DELAY;
       }
       break;
     case PAN:
       if (!ra_axis.goToTarget) {
-      uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.pan_angle);
-      int64_t stepsToMove = currentSettings.panDirection ? arcSecsToMove/ARCSEC_PER_STEP : (arcSecsToMove/ARCSEC_PER_STEP)*-1;
-      ra_axis.resetAxisCount();
-      ra_axis.setAxisTargetCount(stepsToMove);
-      ra_axis.counterActive = ra_axis.goToTarget = true;      
-      ra_axis.startSlew(ra_axis.tracking_rate/5, currentSettings.panDirection); //pan at 10x tracking rate
-      } 
+        uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.pan_angle);
+        int64_t stepsToMove = currentSettings.panDirection ? arcSecsToMove / ARCSEC_PER_STEP : (arcSecsToMove / ARCSEC_PER_STEP) * -1;
+        ra_axis.resetAxisCount();
+        ra_axis.setAxisTargetCount(stepsToMove);
+        ra_axis.counterActive = ra_axis.goToTarget = true;
+        ra_axis.startSlew(ra_axis.tracking_rate / 5, currentSettings.panDirection);  //pan at 10x tracking rate
+      }
       if (!ra_axis.slewActive) {
         currentState = DELAY;
       }
@@ -120,7 +132,7 @@ void Intervalometer::run() {
         frames_taken++;
         ra_axis.setAxisTargetCount(0);
         ra_axis.goToTarget = true;
-        ra_axis.startSlew(ra_axis.tracking_rate/5, !ra_axis.trackingDirection); //rewind at 10 x tracking rate.
+        ra_axis.startSlew(ra_axis.tracking_rate / 5, !ra_axis.trackingDirection);  //rewind at 10 x tracking rate.
         exposures_taken = 0;
         frames_taken++;
       }
@@ -163,47 +175,47 @@ void Intervalometer::runDither() {
 }
 
 void ditherRoutine() {
-  // int i = 0, j = 0;
-  // timerAlarmDisable(timer_tracking);
-  // int random_direction = biased_random_direction(previous_direction);
-  // previous_direction = random_direction;
-  // digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
-  // delay(500);
+  int i = 0, j = 0;
+  timerAlarmDisable(timer_tracking);
+  int random_direction = biased_random_direction(previous_direction);
+  previous_direction = random_direction;
+  digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
+  delay(500);
 
-  // for (i = 0; i < dither_intensity; i++) {
-  //   for (j = 0; j < steps_per_10pixels; j++) {
-  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-  //     delay(10);
-  //     digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-  //     delay(10);
-  //   }
-  // }
+  for (i = 0; i < dither_intensity; i++) {
+    for (j = 0; j < steps_per_10pixels; j++) {
+      digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
+      delay(10);
+      digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
+      delay(10);
+    }
+  }
 
-  // delay(1000);
-  // initTracking();
-  // delay(3000);  //settling time after dither
+  delay(1000);
+  initTracking();
+  delay(3000);  //settling time after dither
 }
 
 // when tracker moves left, next time its 5% higher chance tracked will move right
 // with this tracker should keep in the middle in average
-int biased_random_direction(int previous_direction) {
-  // // Adjust probabilities based on previous selection
-  // if (previous_direction == 0) {
-  //   direction_left_bias = 0.45;   // Lower probability for 0
-  //   direction_right_bias = 0.55;  // Higher probability for 1
-  // }
-  // if (previous_direction == 1) {
-  //   direction_left_bias = 0.55;   // Higher probability for 0
-  //   direction_right_bias = 0.45;  // Lower probability for 1
-  // }
+int Intervalometer::biased_random_direction(int previous_direction) {
+  // Adjust probabilities based on previous selection
+  if (previous_direction == 0) {
+    direction_left_bias = 0.45;   // Lower probability for 0
+    direction_right_bias = 0.55;  // Higher probability for 1
+  }
+  if (previous_direction == 1) {
+    direction_left_bias = 0.55;   // Higher probability for 0
+    direction_right_bias = 0.45;  // Lower probability for 1
+  }
 
-  // float rand_val = random(100) / 100.0;  // random number between 0.00 and 0.99
+  float rand_val = random(100) / 100.0;  // random number between 0.00 and 0.99
 
-  // if (rand_val < direction_left_bias) {
-  //   return 0;
-  // } else {
-  //   return 1;
-  // }
+  if (rand_val < direction_left_bias) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 
 template<class T> int Intervalometer::writeObjectToEEPROM(int address, const T& object) {

@@ -3,7 +3,7 @@
 #include <DNSServer.h>
 #include <string.h>
 #include <esp_wifi.h>
-#include <EEPROM.h>
+#include <ArduinoJson.h>
 #include "config.h"
 #include "website_strings.h"
 #include "intervalometer.h"
@@ -40,9 +40,9 @@ void handleRoot() {
   String formattedHtmlPage = String(html_content);
   formattedHtmlPage.replace("%north%", (c_DIRECTION ? "selected" : ""));
   formattedHtmlPage.replace("%south%", (!c_DIRECTION ? "selected" : ""));
-  formattedHtmlPage.replace("%dither%", (dither_enabled ? "checked" : ""));
-  formattedHtmlPage.replace("%focallen%", String(focal_length).c_str());
-  formattedHtmlPage.replace("%pixsize%", String((float)pixel_size / 100, 2).c_str());
+  // formattedHtmlPage.replace("%dither%", (dither_enabled ? "checked" : ""));
+  // formattedHtmlPage.replace("%focallen%", String(focal_length).c_str());
+  // formattedHtmlPage.replace("%pixsize%", String((float)pixel_size / 100, 2).c_str());
   server.send(200, MIME_TYPE_HTML, formattedHtmlPage);
 }
 
@@ -102,26 +102,71 @@ void handleSlewOff() {
   }
 }
 
+void handleSetExposureSettings() {
+  //include sever Args for preset
+  JsonDocument settings;
+  String json;
+  settings["mode"] = intervalometer.currentSettings.mode;
+  settings["exposures"] = intervalometer.currentSettings.exposures;
+  settings["delay_time"] = intervalometer.currentSettings.delay_time;
+  settings["pre_delay_time"] = intervalometer.currentSettings.pre_delay_time;
+  settings["exposure_time"] = intervalometer.currentSettings.exposure_time;
+  settings["pan_angle"] = intervalometer.currentSettings.pan_angle;
+  settings["panDirection"] = intervalometer.currentSettings.panDirection;
+  settings["dither"] = intervalometer.currentSettings.dither;
+  settings["dither_frequency"] = intervalometer.currentSettings.dither_frequency;
+  settings["post_tracking_on"] = intervalometer.currentSettings.post_tracking_on;
+  settings["frames"] = intervalometer.currentSettings.frames;
+  settings["pixel_size"] = intervalometer.currentSettings.pixel_size;
+  settings["focal_length"] = intervalometer.currentSettings.focal_length;
+  serializeJson(settings, json);
+  Serial.println(json);
+  //intervalometer.readSettingsFromPreset(preset);
+  //server.send
+}
+
+
+void handleGetPresetExposureSettings() {
+  int preset; //get server args
+  intervalometer.readSettingsFromPreset(preset);
+  JsonDocument settings;
+  String json;
+  settings["mode"] = intervalometer.currentSettings.mode;
+  settings["exposures"] = intervalometer.currentSettings.exposures;
+  settings["delay_time"] = intervalometer.currentSettings.delay_time;
+  settings["pre_delay_time"] = intervalometer.currentSettings.pre_delay_time;
+  settings["exposure_time"] = intervalometer.currentSettings.exposure_time;
+  settings["pan_angle"] = intervalometer.currentSettings.pan_angle;
+  settings["panDirection"] = intervalometer.currentSettings.panDirection;
+  settings["dither"] = intervalometer.currentSettings.dither;
+  settings["dither_frequency"] = intervalometer.currentSettings.dither_frequency;
+  settings["post_tracking_on"] = intervalometer.currentSettings.post_tracking_on;
+  settings["frames"] = intervalometer.currentSettings.frames;
+  settings["pixel_size"] = intervalometer.currentSettings.pixel_size;
+  settings["focal_length"] = intervalometer.currentSettings.focal_length;
+  serializeJson(settings, json);
+  Serial.println(json);
+  //server.send
+}
+
 void handleStartCapture() {
- 
 }
 
 void handleAbortCapture() {
-
 }
 
-void handleStatusRequest() { //tosort
+void handleStatusRequest() {  //tosort
   if (ra_axis.slewActive) {
     slewTimeOut.setCountValue(0);  //reset timeout counter
     server.send(200, MIME_TYPE_TEXT, SLEWING);
-  } else if (photo_control_status != INACTIVE) {
-    char status[60];
-    sprintf(status, CAPTURES_REMAINING, exposure_count - exposures_taken);
-    server.send(200, MIME_TYPE_TEXT, status);
-    return;
-  } else if (!ra_axis.trackingActive && photo_control_status == INACTIVE) {
-    server.send(200, MIME_TYPE_TEXT, IDLE);
-    return;
+    // } else if (photo_control_status != INACTIVE) {
+    //   char status[60];
+    //   sprintf(status, CAPTURES_REMAINING, exposure_count - exposures_taken);
+    //   server.send(200, MIME_TYPE_TEXT, status);
+    //   return;
+    // } else if (!ra_axis.trackingActive && photo_control_status == INACTIVE) {
+    //   server.send(200, MIME_TYPE_TEXT, IDLE);
+    //   return;
   } else if (ra_axis.trackingActive) {
     server.send(200, MIME_TYPE_TEXT, TRACKING_ON);
     return;
@@ -142,7 +187,7 @@ void handleVersion() {
 
 void setup() {
   Serial.begin(115200);
-  
+
 #ifdef AP
   WiFi.mode(WIFI_MODE_AP);
   WiFi.softAP(ssid, password);
@@ -205,7 +250,7 @@ void setup() {
   pinMode(MS2, OUTPUT);
   digitalWrite(AXIS1_STEP, LOW);
   digitalWrite(EN12_n, LOW);
-
+  //handleExposureSettings();
 }
 
 void loop() {

@@ -1,4 +1,3 @@
-#include <sys/_stdint.h>
 #include "axis.h"
 
 Axis ra_axis(1, true, AXIS1_DIR, RA_INVERT_DIR_PIN);
