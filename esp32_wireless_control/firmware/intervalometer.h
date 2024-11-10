@@ -70,8 +70,8 @@ private:
   float getArcsec_per_pixel();
   template<class T> int writeObjectToEEPROM(int address, const T& object);
   template<class T> int readObjectFromEEPROM(int address, T& object);
-  void runDither();
-  int biased_random_direction(int previous_direction);
+  uint8_t biased_random_direction(uint8_t previous_direction);
+  uint8_t previousDitherDirection;
 };
 
 extern Intervalometer intervalometer;

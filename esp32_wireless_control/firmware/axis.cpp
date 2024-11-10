@@ -16,7 +16,6 @@ void IRAM_ATTR stepTimerRA_ISR() {
     } 
     if (ra_axis.goToTarget && ra_axis.axis_counter == ra_axis.target_count) {
       ra_axis.goToTarget = false; 
-      ra_axis.counterActive = false;
       ra_axis.stopSlew();
     }
   }

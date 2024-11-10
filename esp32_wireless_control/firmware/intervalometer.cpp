@@ -1,3 +1,5 @@
+#include "esp32-hal-gpio.h"
+#include <cstdlib>
 #include "intervalometer.h"
 
 Intervalometer intervalometer(INTERV_PIN);
@@ -30,6 +32,7 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   currentSettings.frames = 1;
   currentSettings.pixel_size = 1.0;
   currentSettings.focal_length = 1;
+  previousDitherDirection = 0;
 }
 
 /* MODES:
@@ -45,6 +48,7 @@ void Intervalometer::run() {
       intervalometerActive = false;
       exposures_taken = 0;
       frames_taken = 0;
+      ra_axis.counterActive = false;
       if (!currentSettings.post_tracking_on) {
         ra_axis.stopTracking();
       }
@@ -70,8 +74,11 @@ void Intervalometer::run() {
       }
       break;
     case CAPTURE:  //add capture for day time
-
-      if (!timerStarted) {
+      if (currentSettings.mode > 1 && !nextState) { //daytime modes
+        digitalWrite(triggerPin, HIGH);
+        delay(10);
+        nextState = true;
+      } else if (!timerStarted) { //nightime modes
         if (currentSettings.mode == LONG_EXPOSURE_MOVIE) {
           ra_axis.resetAxisCount();
           ra_axis.counterActive = true;
@@ -92,7 +99,19 @@ void Intervalometer::run() {
       break;
     case DITHER:
       if (exposures_taken % currentSettings.dither_frequency == 0) {
-        runDither();  //program dither.
+        if (!ra_axis.goToTarget) {
+          ra_axis.counterActive = true;
+          int random_direction = biased_random_direction(previousDitherDirection);
+          previousDitherDirection = random_direction;
+          int stepsToDither = random_direction ? (random(500) + 1) / 100.0 * getStepsPerTenPixels() : ((random(500) + 1) / 100.0 * getStepsPerTenPixels()) * -1;
+          ra_axis.setAxisTargetCount(stepsToDither + ra_axis.axis_counter);
+          ra_axis.goToTarget = true;
+          ra_axis.startSlew(ra_axis.tracking_rate / 3, random_direction);  //dither at 6 x tracking rate.
+        }
+        if (!ra_axis.slewActive) {
+          currentState = DELAY;
+        }
+      } else {
         currentState = DELAY;
       }
       break;
@@ -170,52 +189,14 @@ float Intervalometer::getArcsec_per_pixel() {
   return (((float)currentSettings.pixel_size / 100.0) / currentSettings.focal_length) * 206.265;
 }
 
-void Intervalometer::runDither() {
-  //pass
-}
-
-void ditherRoutine() {
-  int i = 0, j = 0;
-  timerAlarmDisable(timer_tracking);
-  int random_direction = biased_random_direction(previous_direction);
-  previous_direction = random_direction;
-  digitalWrite(AXIS1_DIR, random_direction);  //dither in a random direction
-  delay(500);
-
-  for (i = 0; i < dither_intensity; i++) {
-    for (j = 0; j < steps_per_10pixels; j++) {
-      digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-      delay(10);
-      digitalWrite(AXIS1_STEP, !digitalRead(AXIS1_STEP));
-      delay(10);
-    }
-  }
-
-  delay(1000);
-  initTracking();
-  delay(3000);  //settling time after dither
-}
-
 // when tracker moves left, next time its 5% higher chance tracked will move right
 // with this tracker should keep in the middle in average
-int Intervalometer::biased_random_direction(int previous_direction) {
+uint8_t Intervalometer::biased_random_direction(uint8_t previous_direction) {
   // Adjust probabilities based on previous selection
-  if (previous_direction == 0) {
-    direction_left_bias = 0.45;   // Lower probability for 0
-    direction_right_bias = 0.55;  // Higher probability for 1
-  }
-  if (previous_direction == 1) {
-    direction_left_bias = 0.55;   // Higher probability for 0
-    direction_right_bias = 0.45;  // Lower probability for 1
-  }
-
-  float rand_val = random(100) / 100.0;  // random number between 0.00 and 0.99
-
-  if (rand_val < direction_left_bias) {
-    return 0;
-  } else {
-    return 1;
-  }
+  uint8_t direction_left_bias = previous_direction == 0 ? 45 : 55; 
+  uint8_t rand_val = random(100);  // random number between 0 and 99
+  uint8_t randomDirection = rand_val < direction_left_bias ? 0 : 1;
+  return randomDirection;
 }
 
 template<class T> int Intervalometer::writeObjectToEEPROM(int address, const T& object) {
