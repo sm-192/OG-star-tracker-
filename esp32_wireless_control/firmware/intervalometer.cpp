@@ -1,5 +1,5 @@
 #include "esp32-hal-gpio.h"
-#include <cstdlib>
+//#include <cstdlib>
 #include "intervalometer.h"
 
 Intervalometer intervalometer(INTERV_PIN);
@@ -78,12 +78,11 @@ void Intervalometer::run() {
         digitalWrite(triggerPin, HIGH);
         delay(10);
         nextState = true;
-      } else if (!timerStarted) { //nightime modes
-        if (currentSettings.mode == LONG_EXPOSURE_MOVIE) {
+      } else if (!timerStarted && !nextState) { //nightime modes
+        if (currentSettings.mode == LONG_EXPOSURE_MOVIE && !ra_axis.counterActive) {
           ra_axis.resetAxisCount();
           ra_axis.counterActive = true;
         }
-
         digitalWrite(triggerPin, HIGH);
         intervalometerTimer.start(2000 * currentSettings.exposure_time, false);
         timerStarted = true;
@@ -101,9 +100,9 @@ void Intervalometer::run() {
       if (exposures_taken % currentSettings.dither_frequency == 0) {
         if (!ra_axis.goToTarget) {
           ra_axis.counterActive = true;
-          int random_direction = biased_random_direction(previousDitherDirection);
+          uint8_t random_direction = biased_random_direction(previousDitherDirection);
           previousDitherDirection = random_direction;
-          int stepsToDither = random_direction ? (random(500) + 1) / 100.0 * getStepsPerTenPixels() : ((random(500) + 1) / 100.0 * getStepsPerTenPixels()) * -1;
+          uint16_t stepsToDither = random_direction ? (random(500) + 1) / 100.0 * getStepsPerTenPixels() : ((random(500) + 1) / 100.0 * getStepsPerTenPixels()) * -1;
           ra_axis.setAxisTargetCount(stepsToDither + ra_axis.axis_counter);
           ra_axis.goToTarget = true;
           ra_axis.startSlew(ra_axis.tracking_rate / 3, random_direction);  //dither at 6 x tracking rate.

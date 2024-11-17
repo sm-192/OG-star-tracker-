@@ -3,7 +3,6 @@
 
 #include "hardwaretimer.h"
 #include "config.h"
-#include <memory>
 
 extern HardwareTimer slewTimeOut;
 

@@ -9,41 +9,29 @@
 #include "intervalometer.h"
 #include "axis.h"
 #include "hardwaretimer.h"
+#include "index_html.h"
 
 // try to update every time there is breaking change
 const int firmware_version = 6;
 
 // Set your Wi-Fi credentials
 const byte DNS_PORT = 53;
-const char* ssid = "OG Star Tracker";  //change to your SSID
-const char* password = "password123";  //change to your password, must be 8+ characters
+//const char* ssid = "OG Star Tracker";  //change to your SSID
+//const char* password = "password123";  //change to your password, must be 8+ characters
+const char* ssid = "NowhereNet";  //change to your SSID
+const char* password = "Ilove69dogsand34*cats";  //change to your password, must be 8+ characters
 //If you are using AP mode, you can access the website using the below URL
 const String website_name = "www.tracker.com";
-const int dither_intensity = 5;
 #define MIN_CUSTOM_SLEW_RATE 2
 
-float arcsec_per_pixel = 0.0;
 unsigned long blink_millis = 0;
-
-
-float direction_left_bias = 0.5, direction_right_bias = 0.5;
-int previous_direction = -1;
-
-
-#define DITHER_PIXELS 30  //how many pixels to dither
 
 WebServer server(80);
 DNSServer dnsServer;
 
 // Handle requests to the root URL ("/")
 void handleRoot() {
-  String formattedHtmlPage = String(html_content);
-  formattedHtmlPage.replace("%north%", (c_DIRECTION ? "selected" : ""));
-  formattedHtmlPage.replace("%south%", (!c_DIRECTION ? "selected" : ""));
-  // formattedHtmlPage.replace("%dither%", (dither_enabled ? "checked" : ""));
-  // formattedHtmlPage.replace("%focallen%", String(focal_length).c_str());
-  // formattedHtmlPage.replace("%pixsize%", String((float)pixel_size / 100, 2).c_str());
-  server.send(200, MIME_TYPE_HTML, formattedHtmlPage);
+  server.send(200, MIME_TYPE_HTML, html_content);
 }
 
 void handleOn() {
@@ -73,13 +61,22 @@ void handleOff() {
   server.send(200, MIME_TYPE_TEXT, TRACKING_OFF);
 }
 
+void handleSlewRequest() { //add togther with 
+  if (!ra_axis.slewActive) {  //if slew is not active - needed for ipad (passes multiple touchon events)
+    int slew_speed = server.arg(SPEED).toInt();
+    int slew_direction = server.arg(SLEW_DIRECTION).toInt();
+    //limit custom slew speed to 2-400
+    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE                                                                                                          : slew_speed;
+    ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, slew_direction);
+    server.send(200, MIME_TYPE_TEXT, SLEWING);
+  }
+}
 
-void handleLeft() {
+void handleLeft() { //add togther with 
   if (!ra_axis.slewActive) {  //if slew is not active - needed for ipad (passes multiple touchon events)
     int slew_speed = server.arg(SPEED).toInt();
     //limit custom slew speed to 2-400
-    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
-                                                                                                              : slew_speed;
+    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE                                                                                                          : slew_speed;
     ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, 0);
     server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
@@ -225,6 +222,7 @@ void setup() {
   server.on("/", HTTP_GET, handleRoot);
   server.on("/on", HTTP_GET, handleOn);
   server.on("/off", HTTP_GET, handleOff);
+  server.on("/startslew", HTTP_GET, handleSlewRequest);
   server.on("/left", HTTP_GET, handleLeft);
   server.on("/right", HTTP_GET, handleRight);
   server.on("/stopslew", HTTP_GET, handleSlewOff);
