@@ -295,8 +295,8 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
     }
 
 		function calculateCaptureTime() {
-      exposure = document.getElementById('mode-select').selectedIndex < 2 ? document.getElementById('exposure').valueAsNumber : 1;
-      numExposures = document.getElementById('num-exposures').valueAsNumber; 
+      exposureTime = document.getElementById('mode-select').selectedIndex < 2 ? document.getElementById('exposure-time').valueAsNumber : 1;
+      exposures = document.getElementById('exposures').valueAsNumber; 
 			predelay = document.getElementById('pre-delay').valueAsNumber; 
       delay = document.getElementById('delay').valueAsNumber;
       frames = document.getElementById('mode-select').selectedIndex == 1 ? document.getElementById('frames').valueAsNumber : 1;
@@ -304,8 +304,8 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       ditherFreq = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('dither-frequency').valueAsNumber : 1;
       focalLength = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('focal_len').valueAsNumber : 1;
       pixelSize = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('pixel_size').valueAsNumber : 1;
-      total = exposure+numExposures+predelay+delay+frames+panAngle+ditherFreq+focalLength+pixelSize;
- 			captureTime  = ((((delay + exposure)*numExposures)-delay)*frames) + predelay;
+      total = exposureTime+exposures+predelay+delay+frames+panAngle+ditherFreq+focalLength+pixelSize;
+ 			captureTime  = ((((delay + exposureTime)*exposures-delay)*frames) + predelay;
       if (isNaN(captureTime)) {
         document.getElementById('captureTime').innerHTML = 'Capture Time: 0 h, 0 m, 0 s';
       } else {
@@ -335,10 +335,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       var captureMode = document.getElementById('mode-select').selectedIndex;
       switch (captureMode) {
         case 0:
-          var exposure = document.getElementById('exposure').value.trim(); 
-          var numExposures = document.getElementById('num-exposures').value.trim();
-          var predelay = document.getElementById('pre-delay').value.trim();
-          var delay = document.getElementById('delay').value.trim();
+          var exposureTime = document.getElementById('exposure-time').value.trim(); 
           var frames = "1";
           var panAngle = "1";
           var panDirection = "1";
@@ -355,10 +352,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           }
           break;
         case 1:
-          var exposure = document.getElementById('exposure').value.trim(); 
-          var numExposures = document.getElementById('num-exposures').value.trim();
-          var predelay = document.getElementById('pre-delay').value.trim();
-          var delay = document.getElementById('delay').value.trim();
+          var exposureTime = document.getElementById('exposure-time').value.trim(); 
           var frames = document.getElementById('frames').value.trim();
           var panAngle = "1";
           var panDirection = "1";
@@ -375,52 +369,34 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           }
           break;
         case 2:
-          var exposure = "1"; 
-          var numExposures = document.getElementById('num-exposures').value.trim();
-          var predelay = document.getElementById('pre-delay').value.trim();
-          var delay = document.getElementById('delay').value.trim();
+          var exposureTime = "1"; 
           var frames = "1";
           var panAngle = "1";
           var panDirection = "1";
           var enableTracking = 0;
           var ditherChoice = 0;
-          if (ditherChoice == 1){
-            var ditherFreq = document.getElementById('dither-frequency').value.trim();
-            var focalLength = document.getElementById('focal_len').value.trim(); 
-            var pixSize = Math.floor(parseFloat(document.getElementById('pixel_size').value.trim()) * 100); 
-          } else {
-            var ditherFreq = "1";
-            var focalLength = "1";
-            var pixSize = "1";
-          }
+          var ditherFreq = "1";
+          var focalLength = "1";
+          var pixSize = "1";
 				  break;
         case 3:
-          var exposure = "1"; 
-          var numExposures = document.getElementById('num-exposures').value.trim();
-          var predelay = document.getElementById('pre-delay').value.trim();
-          var delay = document.getElementById('delay').value.trim();
+          var exposureTime = "1"; 
           var frames = "1";
           var panAngle = Math.floor(parseFloat(document.getElementById('pan_angle').value.trim()) * 100);
           var panDirection = document.getElementById('panDirection').selectedIndex;
           var enableTracking = 0;
           var ditherChoice = 0;
-          if (ditherChoice == 1){
-            var ditherFreq = document.getElementById('dither-frequency').value.trim();
-            var focalLength = document.getElementById('focal_len').value.trim(); 
-            var pixSize = Math.floor(parseFloat(document.getElementById('pixel_size').value.trim()) * 100); 
-          } else {
-            var ditherFreq = 1;
-            var focalLength = 1;
-            var pixSize = 1;
-          }
-				  break;
+          var ditherFreq = 1;
+          var focalLength = 1;
+          var pixSize = 1;
+          break;
           default:
       }
-      if (mode == "save") {
-        var intervalometerUrl = '/save?preset=' + preset + '&captureMode=' + captureMode + '&exposure=' + exposure + '&numExposures=' + numExposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
-      } else if (mode == "start") {
-        var intervalometerUrl = '/start?captureMode=' + captureMode + '&exposure=' + exposure + '&numExposures=' + numExposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
-      }
+      var exposures = document.getElementById('exposures').value.trim();
+      var predelay = document.getElementById('pre-delay').value.trim();
+      var delay = document.getElementById('delay').value.trim();
+
+      var intervalometerUrl = '/setCurrent?mode=' + mode +'&preset=' + preset + '&captureMode=' + captureMode + '&exposureTime=' + exposureTime + '&numExposures=' + numExposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
       sendRequest(intervalometerUrl); 
     }
 
@@ -508,11 +484,11 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
         <div class="grid2" id='exposureDiv'> 
           <h3>Exposure length:</h3> 
-          <input type='number' id='exposure' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <input type='number' id='exposure-time' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
           <h3>Number of exposures:</h3> 
-          <input type='number' id='num-exposures' placeholder='nº of photos (Ex. 20)' onchange="calculateCaptureTime();"> 
+          <input type='number' id='exposures' placeholder='nº of photos (Ex. 20)' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
           <h3>Pre Delay Time:</h3> 

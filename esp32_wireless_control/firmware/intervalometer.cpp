@@ -23,8 +23,8 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   currentSettings.exposures = 1;
   currentSettings.delay_time = 1;
   currentSettings.pre_delay_time = 1;
-  currentSettings.exposure_time = 1;
-  currentSettings.pan_angle = 0.0;
+  currentSettings.exposureTime = 1;
+  currentSettings.panAngle = 0.0;
   currentSettings.panDirection = true;
   currentSettings.dither = false;
   currentSettings.dither_frequency = 1;
@@ -33,6 +33,10 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   currentSettings.pixel_size = 1.0;
   currentSettings.focal_length = 1;
   previousDitherDirection = 0;
+}
+
+void Intervalometer::abortCapture() {
+  currentState = INACTIVE;
 }
 
 /* MODES:
@@ -48,9 +52,14 @@ void Intervalometer::run() {
       intervalometerActive = false;
       exposures_taken = 0;
       frames_taken = 0;
+      timerStarted = false;
+      nextState = false;
       ra_axis.counterActive = false;
       if (!currentSettings.post_tracking_on) {
         ra_axis.stopTracking();
+      }
+      if (intervalometerActive) {
+        currentState = PRE_DELAY;
       }
       break;
     case PRE_DELAY:
@@ -84,7 +93,7 @@ void Intervalometer::run() {
           ra_axis.counterActive = true;
         }
         digitalWrite(triggerPin, HIGH);
-        intervalometerTimer.start(2000 * currentSettings.exposure_time, false);
+        intervalometerTimer.start(2000 * currentSettings.exposureTime, false);
         timerStarted = true;
       }
       if (nextState) {
@@ -116,7 +125,7 @@ void Intervalometer::run() {
       break;
     case PAN:
       if (!ra_axis.goToTarget) {
-        uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.pan_angle);
+        uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.panAngle);
         int64_t stepsToMove = currentSettings.panDirection ? arcSecsToMove / ARCSEC_PER_STEP : (arcSecsToMove / ARCSEC_PER_STEP) * -1;
         ra_axis.resetAxisCount();
         ra_axis.setAxisTargetCount(stepsToMove);

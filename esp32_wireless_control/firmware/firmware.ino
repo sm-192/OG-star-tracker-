@@ -16,10 +16,10 @@ const int firmware_version = 6;
 
 // Set your Wi-Fi credentials
 const byte DNS_PORT = 53;
-//const char* ssid = "OG Star Tracker";  //change to your SSID
-//const char* password = "password123";  //change to your password, must be 8+ characters
-const char* ssid = "NowhereNet";  //change to your SSID
-const char* password = "Ilove69dogsand34*cats";  //change to your password, must be 8+ characters
+const char* ssid = "OG Star Tracker";  //change to your SSID
+const char* password = "password123";  //change to your password, must be 8+ characters
+//const char* ssid = "NowhereNet";                 //change to your SSID
+//const char* password = "Ilove69dogsand34*cats";  //change to your password, must be 8+ characters
 //If you are using AP mode, you can access the website using the below URL
 const String website_name = "www.tracker.com";
 #define MIN_CUSTOM_SLEW_RATE 2
@@ -61,22 +61,24 @@ void handleOff() {
   server.send(200, MIME_TYPE_TEXT, TRACKING_OFF);
 }
 
-void handleSlewRequest() { //add togther with 
+void handleSlewRequest() {    //add togther with
   if (!ra_axis.slewActive) {  //if slew is not active - needed for ipad (passes multiple touchon events)
     int slew_speed = server.arg(SPEED).toInt();
     int slew_direction = server.arg(SLEW_DIRECTION).toInt();
     //limit custom slew speed to 2-400
-    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE                                                                                                          : slew_speed;
+    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
+                                                                                                              : slew_speed;
     ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, slew_direction);
     server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
 }
 
-void handleLeft() { //add togther with 
+void handleLeft() {           //add togther with
   if (!ra_axis.slewActive) {  //if slew is not active - needed for ipad (passes multiple touchon events)
     int slew_speed = server.arg(SPEED).toInt();
     //limit custom slew speed to 2-400
-    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE                                                                                                          : slew_speed;
+    slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
+                                                                                                              : slew_speed;
     ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, 0);
     server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
@@ -99,32 +101,56 @@ void handleSlewOff() {
   }
 }
 
-void handleSetExposureSettings() {
-  //include sever Args for preset
-  JsonDocument settings;
-  String json;
-  settings["mode"] = intervalometer.currentSettings.mode;
-  settings["exposures"] = intervalometer.currentSettings.exposures;
-  settings["delay_time"] = intervalometer.currentSettings.delay_time;
-  settings["pre_delay_time"] = intervalometer.currentSettings.pre_delay_time;
-  settings["exposure_time"] = intervalometer.currentSettings.exposure_time;
-  settings["pan_angle"] = intervalometer.currentSettings.pan_angle;
-  settings["panDirection"] = intervalometer.currentSettings.panDirection;
-  settings["dither"] = intervalometer.currentSettings.dither;
-  settings["dither_frequency"] = intervalometer.currentSettings.dither_frequency;
-  settings["post_tracking_on"] = intervalometer.currentSettings.post_tracking_on;
-  settings["frames"] = intervalometer.currentSettings.frames;
-  settings["pixel_size"] = intervalometer.currentSettings.pixel_size;
-  settings["focal_length"] = intervalometer.currentSettings.focal_length;
-  serializeJson(settings, json);
-  Serial.println(json);
-  //intervalometer.readSettingsFromPreset(preset);
-  //server.send
+void handleSetCurrent() {
+  if (!intervalometer.intervalometerActive) {
+    int modeInt = server.arg(CAPTURE_MODE).toInt();
+    Intervalometer::Mode captureMode;
+    switch (modeInt) {
+      case 0:  //Long Exp Still
+        captureMode = Intervalometer::LONG_EXPOSURE_STILL;
+        break;
+      case 1:  //Long Exp Movie
+        captureMode = Intervalometer::LONG_EXPOSURE_MOVIE;
+        break;
+      case 2:  //day time lapse
+        captureMode = Intervalometer::DAY_TIME_LAPSE;
+        break;
+      case 3:
+        captureMode = Intervalometer::DAY_TIME_LAPSE_PAN;
+        break;
+      default:
+        break;
+    }
+    intervalometer.currentSettings.mode = captureMode;
+    intervalometer.currentSettings.exposureTime = server.arg(EXPOSURE_TIME).toInt();
+    intervalometer.currentSettings.exposures = server.arg(EXPOSURES).toInt();
+    intervalometer.currentSettings.pre_delay_time = server.arg(PREDELAY).toInt();
+    intervalometer.currentSettings.delay_time = server.arg(DELAY).toInt();
+    intervalometer.currentSettings.frames = server.arg(FRAMES).toInt();
+    intervalometer.currentSettings.panAngle = server.arg(PAN_ANGLE).toFloat() / 100;
+    intervalometer.currentSettings.panDirection = server.arg(PAN_DIRECTION).toInt();
+    intervalometer.currentSettings.post_tracking_on = server.arg(ENABLE_TRACKING).toInt();
+    intervalometer.currentSettings.dither = server.arg(DITHER_CHOICE).toInt();
+    intervalometer.currentSettings.dither_frequency = server.arg(DITHER_FREQ).toInt();
+    intervalometer.currentSettings.focal_length = server.arg(FOCAL_LENGTH).toInt();
+    intervalometer.currentSettings.pixel_size = server.arg(PIXEL_SIZE).toFloat() / 100;
+    String currentMode = server.arg(MODE);
+    if (currentMode == "save") {
+      int preset = server.arg(PRESET).toInt();
+      intervalometer.saveSettingsToPreset(preset);
+      server.send(200, MIME_TYPE_TEXT, "Saved Preset");
+    } else if (currentMode == "start") {
+      intervalometer.intervalometerActive = true;
+      server.send(200, MIME_TYPE_TEXT, CAPTURE_ON);
+    }
+  } else {
+    server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_ON);
+  }
 }
 
 
 void handleGetPresetExposureSettings() {
-  int preset; //get server args
+  int preset;  //get server args
   intervalometer.readSettingsFromPreset(preset);
   JsonDocument settings;
   String json;
@@ -132,8 +158,8 @@ void handleGetPresetExposureSettings() {
   settings["exposures"] = intervalometer.currentSettings.exposures;
   settings["delay_time"] = intervalometer.currentSettings.delay_time;
   settings["pre_delay_time"] = intervalometer.currentSettings.pre_delay_time;
-  settings["exposure_time"] = intervalometer.currentSettings.exposure_time;
-  settings["pan_angle"] = intervalometer.currentSettings.pan_angle;
+  settings["exposureTime"] = intervalometer.currentSettings.exposureTime;
+  settings["panAngle"] = intervalometer.currentSettings.panAngle;
   settings["panDirection"] = intervalometer.currentSettings.panDirection;
   settings["dither"] = intervalometer.currentSettings.dither;
   settings["dither_frequency"] = intervalometer.currentSettings.dither_frequency;
@@ -146,10 +172,13 @@ void handleGetPresetExposureSettings() {
   //server.send
 }
 
-void handleStartCapture() {
-}
-
 void handleAbortCapture() {
+  if (intervalometer.intervalometerActive) {
+    intervalometer.abortCapture();
+    server.send(200, MIME_TYPE_TEXT, CAPTURE_OFF);
+  } else {
+    server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_OFF);
+  }
 }
 
 void handleStatusRequest() {  //tosort
@@ -226,7 +255,7 @@ void setup() {
   server.on("/left", HTTP_GET, handleLeft);
   server.on("/right", HTTP_GET, handleRight);
   server.on("/stopslew", HTTP_GET, handleSlewOff);
-  server.on("/start", HTTP_GET, handleStartCapture);
+  server.on("/setCurrent", HTTP_GET, handleSetCurrent);
   server.on("/abort", HTTP_GET, handleAbortCapture);
   server.on("/status", HTTP_GET, handleStatusRequest);
   server.on("/version", HTTP_GET, handleVersion);
