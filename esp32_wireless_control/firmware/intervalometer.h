@@ -72,6 +72,7 @@ public:
   Settings currentSettings;
   Settings presets[5];
   void abortCapture();
+  void startCapture();
   bool nextState;
   bool intervalometerActive;
   Intervalometer(uint8_t triggerPinArg);

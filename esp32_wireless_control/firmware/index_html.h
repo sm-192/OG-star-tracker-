@@ -258,7 +258,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           document.getElementById('panDirectionDiv').style.display='none'; 
           document.getElementById('trackEndDiv').style.display='flex'; 
           document.getElementById('ditherChoiceDiv').style.display='flex'; 
-          chooseDither()
+          chooseDither();
           break;
         case 1:
           document.getElementById('exposureDiv').style.display='flex'; 
@@ -267,7 +267,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           document.getElementById('panDirectionDiv').style.display='none'; 
           document.getElementById('trackEndDiv').style.display='flex'; 
           document.getElementById('ditherChoiceDiv').style.display='flex'; 
-          chooseDither()
+          chooseDither();
           break;
         case 2:
           document.getElementById('exposureDiv').style.display='none'; 
@@ -305,7 +305,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       focalLength = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('focal_len').valueAsNumber : 1;
       pixelSize = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('pixel_size').valueAsNumber : 1;
       total = exposureTime+exposures+predelay+delay+frames+panAngle+ditherFreq+focalLength+pixelSize;
- 			captureTime  = ((((delay + exposureTime)*exposures-delay)*frames) + predelay;
+ 			captureTime  = (((delay + exposureTime)*exposures-delay)*frames) + predelay;
       if (isNaN(captureTime)) {
         document.getElementById('captureTime').innerHTML = 'Capture Time: 0 h, 0 m, 0 s';
       } else {
@@ -396,7 +396,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       var predelay = document.getElementById('pre-delay').value.trim();
       var delay = document.getElementById('delay').value.trim();
 
-      var intervalometerUrl = '/setCurrent?mode=' + mode +'&preset=' + preset + '&captureMode=' + captureMode + '&exposureTime=' + exposureTime + '&numExposures=' + numExposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
+      var intervalometerUrl = '/setCurrent?mode=' + mode +'&preset=' + preset + '&captureMode=' + captureMode + '&exposureTime=' + exposureTime + '&exposures=' + exposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
       sendRequest(intervalometerUrl); 
     }
 

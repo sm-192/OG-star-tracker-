@@ -16,10 +16,10 @@ const int firmware_version = 6;
 
 // Set your Wi-Fi credentials
 const byte DNS_PORT = 53;
-const char* ssid = "OG Star Tracker";  //change to your SSID
-const char* password = "password123";  //change to your password, must be 8+ characters
-//const char* ssid = "NowhereNet";                 //change to your SSID
-//const char* password = "Ilove69dogsand34*cats";  //change to your password, must be 8+ characters
+//const char* ssid = "OG Star Tracker";  //change to your SSID
+//const char* password = "password123";  //change to your password, must be 8+ characters
+const char* ssid = "NowhereNet";                 //change to your SSID
+const char* password = "Ilove69dogsand34*cats";  //change to your password, must be 8+ characters
 //If you are using AP mode, you can access the website using the below URL
 const String website_name = "www.tracker.com";
 #define MIN_CUSTOM_SLEW_RATE 2
@@ -140,7 +140,7 @@ void handleSetCurrent() {
       intervalometer.saveSettingsToPreset(preset);
       server.send(200, MIME_TYPE_TEXT, "Saved Preset");
     } else if (currentMode == "start") {
-      intervalometer.intervalometerActive = true;
+      intervalometer.startCapture();
       server.send(200, MIME_TYPE_TEXT, CAPTURE_ON);
     }
   } else {
@@ -150,26 +150,26 @@ void handleSetCurrent() {
 
 
 void handleGetPresetExposureSettings() {
-  int preset;  //get server args
+  int preset = server.arg(PRESET).toInt();
   intervalometer.readSettingsFromPreset(preset);
   JsonDocument settings;
   String json;
-  settings["mode"] = intervalometer.currentSettings.mode;
-  settings["exposures"] = intervalometer.currentSettings.exposures;
-  settings["delay_time"] = intervalometer.currentSettings.delay_time;
-  settings["pre_delay_time"] = intervalometer.currentSettings.pre_delay_time;
-  settings["exposureTime"] = intervalometer.currentSettings.exposureTime;
-  settings["panAngle"] = intervalometer.currentSettings.panAngle;
-  settings["panDirection"] = intervalometer.currentSettings.panDirection;
-  settings["dither"] = intervalometer.currentSettings.dither;
-  settings["dither_frequency"] = intervalometer.currentSettings.dither_frequency;
-  settings["post_tracking_on"] = intervalometer.currentSettings.post_tracking_on;
-  settings["frames"] = intervalometer.currentSettings.frames;
-  settings["pixel_size"] = intervalometer.currentSettings.pixel_size;
-  settings["focal_length"] = intervalometer.currentSettings.focal_length;
+  settings[MODE] = intervalometer.currentSettings.mode;
+  settings[EXPOSURES] = intervalometer.currentSettings.exposures;
+  settings[DELAY] = intervalometer.currentSettings.delay_time;
+  settings[PREDELAY] = intervalometer.currentSettings.pre_delay_time;
+  settings[EXPOSURE_TIME] = intervalometer.currentSettings.exposureTime;
+  settings[PAN_ANGLE] = intervalometer.currentSettings.panAngle;
+  settings[PAN_DIRECTION] = intervalometer.currentSettings.panDirection;
+  settings[DITHER_CHOICE] = intervalometer.currentSettings.dither;
+  settings[DITHER_FREQ] = intervalometer.currentSettings.dither_frequency;
+  settings[ENABLE_TRACKING] = intervalometer.currentSettings.post_tracking_on;
+  settings[FRAMES] = intervalometer.currentSettings.frames;
+  settings[PIXEL_SIZE] = intervalometer.currentSettings.pixel_size;
+  settings[FOCAL_LENGTH] = intervalometer.currentSettings.focal_length;
   serializeJson(settings, json);
   Serial.println(json);
-  //server.send
+  server.send(200, "application/json", json);
 }
 
 void handleAbortCapture() {

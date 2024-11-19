@@ -16,6 +16,8 @@ void HardwareTimer::attachInterupt(void (*functionToCall)()){
 
 void HardwareTimer::start(uint64_t alarmValue, bool autoReload) {
   timerAlarm(timer_pointer, alarmValue, true, 0);
+  timerRestart(timer_pointer);
+  timerStart(timer_pointer);
 }
 
 void HardwareTimer::stop() {
