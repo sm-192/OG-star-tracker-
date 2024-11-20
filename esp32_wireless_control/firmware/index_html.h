@@ -303,7 +303,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       panAngle = document.getElementById('mode-select').selectedIndex == 3 ? document.getElementById('pan-angle').valueAsNumber : 1;
       ditherFreq = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('dither-frequency').valueAsNumber : 1;
       focalLength = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('focal_len').valueAsNumber : 1;
-      pixelSize = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('pixel_size').valueAsNumber : 1;
+      pixelSize = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('pixelSize').valueAsNumber : 1;
       total = exposureTime+exposures+predelay+delay+frames+panAngle+ditherFreq+focalLength+pixelSize;
  			captureTime  = (((delay + exposureTime)*exposures-delay)*frames) + predelay;
       if (isNaN(captureTime)) {
@@ -344,7 +344,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           if (ditherChoice == 1){
             var ditherFreq = document.getElementById('dither-frequency').value.trim();
             var focalLength = document.getElementById('focal_len').value.trim(); 
-            var pixSize = Math.floor(parseFloat(document.getElementById('pixel_size').value.trim()) * 100); 
+            var pixSize = Math.floor(parseFloat(document.getElementById('pixelSize').value.trim()) * 100); 
           } else {
             var ditherFreq = "1";
             var focalLength = "1";
@@ -361,7 +361,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           if (ditherChoice == 1){
             var ditherFreq = document.getElementById('dither-frequency').value.trim();
             var focalLength = document.getElementById('focal_len').value.trim(); 
-            var pixSize = Math.floor(parseFloat(document.getElementById('pixel_size').value.trim()) * 100); 
+            var pixSize = Math.floor(parseFloat(document.getElementById('pixelSize').value.trim()) * 100); 
           } else {
             var ditherFreq = "1";
             var focalLength = "1";
@@ -398,6 +398,36 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
 
       var intervalometerUrl = '/setCurrent?mode=' + mode +'&preset=' + preset + '&captureMode=' + captureMode + '&exposureTime=' + exposureTime + '&exposures=' + exposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
       sendRequest(intervalometerUrl); 
+    }
+
+    function sendPresetReadRequest () {
+      var preset = document.getElementById('preset-select').selectedIndex;
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          var settings = JSON.parse(this.responseText);
+           document.getElementById('mode').value = settings.mode;
+           document.getElementById('exposures').value = settings.exposures;
+           document.getElementById('delay').value = settings.delay;
+           document.getElementById('preDelayTime').value = settings.preDelayTime;
+           document.getElementById('exposureTime').value = settings.exposureTime;
+           document.getElementById('panAngle').value = settings.panAngle;
+           document.getElementById('panDirection').value = settings.panDirection;
+           document.getElementById('dither').value = settings.dither;
+           document.getElementById('ditherFrequency').value = settings.ditherFrequency;
+           document.getElementById('enableTracking').value = settings.enableTracking;
+           document.getElementById('frames').value = settings.frames;
+           document.getElementById('pixelSize').value = settings.pixelSize;
+           document.getElementById('focalLength').value = settings.focalLength;
+           document.getElementById('mode').dispatchEvent(new Event('change'));
+
+
+        }
+      };
+      var html = '/readPreset?preset=' + preset;
+      xhr.open('GET', html, true);
+      xhr.send();
+
     }
 
   </script> 
@@ -537,7 +567,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
         <div class="grid2" id='ditherPixelSizeDiv'> 
           <h3>Camera pixel size:</h3> 
-          <input type="number" id="pixel_size" placeholder='in micrometre (Ex. 4.1)' step="0.01" onchange="calculateCaptureTime();"> 
+          <input type="number" id="pixelSize" placeholder='in micrometre (Ex. 4.1)' step="0.01" onchange="calculateCaptureTime();"> 
         </div> 
         <div class="button-group"> 
           <button class="right-separator" type="button" id='capture-button' onclick="sendCaptureInformation('start');" disabled>START CAPTURE</button> 
@@ -552,9 +582,6 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         <h3 id='status'>Test Message</h3> 
       </div> 
       <h4 id='firmware'>Firmware Version: </h4>
-    </div> //https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_popup
-    <div class="popup" onclick="myFunction()">Click me!
-      <span class="popuptext" id="myPopup">Tracking can either North or South and can be a varying speeds.</span>
     </div> 
   </body> 
   </html>

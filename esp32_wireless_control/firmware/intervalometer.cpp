@@ -19,20 +19,22 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   intervalometerActive = false;
   readPresetsFromEEPROM();
   timerStarted = false;
+  axisMoving = false;
+  total = 0;
   triggerPin = triggerPinArg;
   currentSettings.mode = LONG_EXPOSURE_STILL;
   currentSettings.exposures = 1;
-  currentSettings.delay_time = 1;
-  currentSettings.pre_delay_time = 1;
+  currentSettings.delayTime = 1;
+  currentSettings.preDelayTime = 1;
   currentSettings.exposureTime = 1;
   currentSettings.panAngle = 0.0;
   currentSettings.panDirection = true;
   currentSettings.dither = false;
-  currentSettings.dither_frequency = 1;
-  currentSettings.post_tracking_on = false;
+  currentSettings.ditherFrequency = 1;
+  currentSettings.enableTracking = false;
   currentSettings.frames = 1;
-  currentSettings.pixel_size = 1.0;
-  currentSettings.focal_length = 1;
+  currentSettings.pixelSize = 1.0;
+  currentSettings.focalLength = 1;
   previousDitherDirection = 0;
 }
 
@@ -55,15 +57,17 @@ DAY_TIME_LAPSE_PAN: Predelay>(Camera Capture>pan deg>delay (x exposures)) (no tr
 void Intervalometer::run() {
   switch (currentState) {
     case INACTIVE:
+      ra_axis.stopSlew();
       intervalometerTimer.stop();
       digitalWrite(triggerPin, LOW);
       intervalometerActive = false;
       exposures_taken = 0;
       frames_taken = 0;
       timerStarted = false;
+      axisMoving = false;
       nextState = false;
       ra_axis.counterActive = false;
-      if (!currentSettings.post_tracking_on) {
+      if (!currentSettings.enableTracking) {
         ra_axis.stopTracking();
       }
       break;
@@ -77,7 +81,7 @@ void Intervalometer::run() {
           break;
         }
         ra_axis.counterActive = currentSettings.mode == LONG_EXPOSURE_MOVIE ? true : false;
-        intervalometerTimer.start(2000 * currentSettings.pre_delay_time, false);
+        intervalometerTimer.start(2000 * currentSettings.preDelayTime, false);
         timerStarted = true;
         intervalometerActive = true;
       }
@@ -88,7 +92,7 @@ void Intervalometer::run() {
         currentState = CAPTURE;
       }
       break;
-    case CAPTURE:                         
+    case CAPTURE:
       if (!timerStarted) {  //nightime modes
         if (currentSettings.mode == LONG_EXPOSURE_MOVIE && !ra_axis.counterActive) {
           ra_axis.resetAxisCount();
@@ -98,7 +102,7 @@ void Intervalometer::run() {
         if (currentSettings.mode > 1) {
           intervalometerTimer.start(2000, false);  //1 sec should cover day time exposures.
           delay(10);
-          digitalWrite(triggerPin, LOW); 
+          digitalWrite(triggerPin, LOW);
         } else {
           intervalometerTimer.start(2000 * currentSettings.exposureTime, false);
         }
@@ -115,20 +119,30 @@ void Intervalometer::run() {
       }
       break;
     case DITHER:
-      if (exposures_taken % currentSettings.dither_frequency == 0) {
-        if (!ra_axis.goToTarget) {
-          uint8_t random_direction = biased_random_direction(previousDitherDirection);
-          previousDitherDirection = random_direction;
-          uint16_t stepsToDither = random_direction ? (random(500) + 1) / 100.0 * getStepsPerTenPixels() : ((random(500) + 1) / 100.0 * getStepsPerTenPixels()) * -1;
-          ra_axis.setAxisTargetCount(stepsToDither + ra_axis.axis_counter);
-          ra_axis.goToTarget = ra_axis.counterActive = true;
-          ra_axis.startSlew(ra_axis.tracking_rate / 3, random_direction);  //dither at 6 x tracking rate.
+      if (exposures_taken % currentSettings.ditherFrequency == 0) {
+        if (!axisMoving) {
+          axisMoving = true;
+          uint8_t randomDirection = biasedRandomDirection(previousDitherDirection);
+          previousDitherDirection = randomDirection;
+          int16_t stepsToDither = randomDirection ? ((random(200) + 1) / 100.0) * getStepsPerTenPixels() : (((random(200) + 1) / 100.0) * getStepsPerTenPixels()) * -1;
+          //Serial.print("Steps to Dither  ");
+          total += stepsToDither;
+          Serial.print("Total=  ");
+          Serial.println(total);
+          //Serial.print(", direction  ");
+          //Serial.println(randomDirection);
+
+          ra_axis.setAxisTargetCount(stepsToDither + ra_axis.axisCountValue);
+          if (ra_axis.targetCount != ra_axis.axisCountValue) {
+            ra_axis.goToTarget = ra_axis.counterActive = true;
+            ra_axis.startSlew(ra_axis.trackingRate / 3, randomDirection);  //dither at 6 x tracking rate.
+          }
         }
         if (!ra_axis.slewActive) {
           if (currentSettings.mode != LONG_EXPOSURE_MOVIE) {
             ra_axis.counterActive = false;
           }
-          ra_axis.goToTarget = false;
+          axisMoving = false;
           currentState = DELAY;
         }
       } else {
@@ -141,8 +155,10 @@ void Intervalometer::run() {
         int64_t stepsToMove = currentSettings.panDirection ? arcSecsToMove / ARCSEC_PER_STEP : (arcSecsToMove / ARCSEC_PER_STEP) * -1;
         ra_axis.resetAxisCount();
         ra_axis.setAxisTargetCount(stepsToMove);
-        ra_axis.counterActive = ra_axis.goToTarget = true;
-        ra_axis.startSlew(ra_axis.tracking_rate / 5, currentSettings.panDirection);  //pan at 10x tracking rate
+        if (ra_axis.targetCount != ra_axis.axisCountValue) {
+          ra_axis.counterActive = ra_axis.goToTarget = true;
+          ra_axis.startSlew(ra_axis.trackingRate / 5, currentSettings.panDirection);  //pan at 10x tracking rate
+        }
       }
       if (!ra_axis.slewActive) {
         ra_axis.counterActive = ra_axis.goToTarget = false;
@@ -155,7 +171,7 @@ void Intervalometer::run() {
                                                                                                                       : INACTIVE;
       } else {
         if (!timerStarted) {
-          intervalometerTimer.start(2000 * currentSettings.delay_time, false);
+          intervalometerTimer.start(2000 * currentSettings.delayTime, false);
           timerStarted = true;
         }
         if (nextState) {
@@ -172,8 +188,10 @@ void Intervalometer::run() {
         exposures_taken = 0;
         frames_taken++;
         ra_axis.setAxisTargetCount(0);
-        ra_axis.goToTarget = true;
-        ra_axis.startSlew(ra_axis.tracking_rate / 5, !ra_axis.trackingDirection);  //rewind at 10 x tracking rate.
+        if (ra_axis.targetCount != ra_axis.axisCountValue) {
+          ra_axis.goToTarget = true;
+          ra_axis.startSlew(ra_axis.trackingRate / 10, !ra_axis.trackingDirection);  //rewind at 20 x tracking rate.
+        }
       }
       if (!ra_axis.slewActive) {
         currentState = CAPTURE;
@@ -205,13 +223,12 @@ uint16_t Intervalometer::getStepsPerTenPixels() {
 }
 
 float Intervalometer::getArcsec_per_pixel() {
-  //div pixel size by 100 since we multiplied it by 100 in html page
-  return (((float)currentSettings.pixel_size / 100.0) / currentSettings.focal_length) * 206.265;
+  return ((float)currentSettings.pixelSize / currentSettings.focalLength) * 206.265;
 }
 
 // when tracker moves left, next time its 5% higher chance tracked will move right
 // with this tracker should keep in the middle in average
-uint8_t Intervalometer::biased_random_direction(uint8_t previous_direction) {
+uint8_t Intervalometer::biasedRandomDirection(uint8_t previous_direction) {
   // Adjust probabilities based on previous selection
   uint8_t direction_left_bias = previous_direction == 0 ? 45 : 55;
   uint8_t rand_val = random(100);  // random number between 0 and 99

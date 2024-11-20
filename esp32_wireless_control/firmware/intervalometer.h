@@ -26,6 +26,8 @@ public:
 private:
   HardwareTimer intervalometerTimer;
   bool timerStarted;
+  bool axisMoving;
+  int total;
   void savePresetsToEEPPROM();
   void readPresetsFromEEPROM();
   uint8_t triggerPin;
@@ -35,7 +37,7 @@ private:
   float getArcsec_per_pixel();
   template<class T> int writeObjectToEEPROM(int address, const T& object);
   template<class T> int readObjectFromEEPROM(int address, T& object);
-  uint8_t biased_random_direction(uint8_t previous_direction);
+  uint8_t biasedRandomDirection(uint8_t previous_direction);
   uint8_t previousDitherDirection;
 
   enum State { INACTIVE,
@@ -49,17 +51,17 @@ private:
   struct Settings {  //20 bytes
     Mode mode;
     uint16_t exposures;        //2b
-    uint16_t delay_time;       //seconds, max limt 18 h, 12 mins //2b
-    uint16_t pre_delay_time;   //seconds //2b
+    uint16_t delayTime;       //seconds, max limt 18 h, 12 mins //2b
+    uint16_t preDelayTime;   //seconds //2b
     uint16_t exposureTime;     //seconds, max limt 18 h, 12 mins //2b
     float panAngle;            //degrees //4b
     bool panDirection;         //
     bool dither;               //1b
-    uint8_t dither_frequency;  //
-    bool post_tracking_on;     //1b
+    uint8_t ditherFrequency;  //
+    bool enableTracking;     //1b
     uint16_t frames;           //2b
-    float pixel_size;          //micrometre (um) //4b
-    uint16_t focal_length;     //mm //2b
+    float pixelSize;          //micrometre (um) //4b
+    uint16_t focalLength;     //mm //2b
   };
 
 

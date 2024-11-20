@@ -9,13 +9,11 @@ volatile bool dec_axis_step_phase = 0;
 void IRAM_ATTR stepTimerRA_ISR() {
   //tracking ISR
   ra_axis_step_phase = !ra_axis_step_phase;
-  digitalWrite(AXIS1_STEP, ra_axis_step_phase);  //toggle step pin at required frequency
-  if (ra_axis.counterActive) {                   //if counter active
-    if (ra_axis_step_phase) {
-      ra_axis.axisAbsoluteDirection ? ra_axis.axis_counter++ : ra_axis.axis_counter--;
-    } 
-    if (ra_axis.goToTarget && ra_axis.axis_counter == ra_axis.target_count) {
-      ra_axis.goToTarget = false; 
+  digitalWrite(AXIS1_STEP, ra_axis_step_phase);       //toggle step pin at required frequency
+  if (ra_axis.counterActive && ra_axis_step_phase) {  //if counter active
+    ra_axis.axisAbsoluteDirection ? ra_axis.axisCountValue++ : ra_axis.axisCountValue--;
+    if (ra_axis.goToTarget && ra_axis.axisCountValue >= ra_axis.targetCount) {
+      ra_axis.goToTarget = false;
       ra_axis.stopSlew();
     }
   }
@@ -26,7 +24,7 @@ void IRAM_ATTR stepTimerDEC_ISR() {
   dec_axis_step_phase = !dec_axis_step_phase;
   digitalWrite(AXIS2_STEP, dec_axis_step_phase);                                         //toggle step pin at required frequency
   if (dec_axis_step_phase && dec_axis.counterActive) {                                   //if counter active
-    dec_axis.axisAbsoluteDirection ? dec_axis.axis_counter++ : dec_axis.axis_counter--;  //TO_FIX
+    dec_axis.axisAbsoluteDirection ? dec_axis.axisCountValue++ : dec_axis.axisCountValue--;  //TO_FIX
   }
 }
 
@@ -43,7 +41,7 @@ Axis::Axis(uint8_t axis, bool defaultTrackingOn, uint8_t dirPinforAxis, bool inv
   trackingDirection = c_DIRECTION;
   dirPin = dirPinforAxis;
   invertDirectionPin = invertDirPin;
-  tracking_rate = TRACKING_SIDEREAL;
+  trackingRate = TRACKING_SIDEREAL;
   switch (axisNumber) {
     case 1:
       stepTimer.attachInterupt(&stepTimerRA_ISR);
@@ -59,14 +57,14 @@ Axis::Axis(uint8_t axis, bool defaultTrackingOn, uint8_t dirPinforAxis, bool inv
 }
 
 
-void Axis::startTracking(TRACKING_RATES rate, bool directionArg) {
-  tracking_rate = rate;
+void Axis::startTracking(trackingRateS rate, bool directionArg) {
+  trackingRate = rate;
   trackingDirection = axisAbsoluteDirection = directionArg;
   setDirection(axisAbsoluteDirection);
   trackingActive = true;
   stepTimer.stop();
   setMicrostep(16);
-  stepTimer.start(tracking_rate, true);
+  stepTimer.start(trackingRate, true);
 }
 
 void Axis::stopTracking() {
@@ -78,7 +76,7 @@ void Axis::startSlew(uint64_t rate, bool directionArg) {
   stepTimer.stop();
   axisAbsoluteDirection = directionArg;
   setDirection(axisAbsoluteDirection);
-  slewActive = true;  
+  slewActive = true;
   setMicrostep(8);
   slewTimeOut.start(12000, true);
   stepTimer.start(rate, true);
@@ -89,16 +87,16 @@ void Axis::stopSlew() {
   stepTimer.stop();
   slewTimeOut.stop();
   if (trackingActive) {
-    startTracking(tracking_rate, trackingDirection);
+    startTracking(trackingRate, trackingDirection);
   }
 }
 
 void Axis::setAxisTargetCount(int64_t count) {
-  target_count = count;
+  targetCount = count;
 }
 
 void Axis::resetAxisCount() {
-  axis_counter = 0;
+  axisCountValue = 0;
 }
 
 void Axis::setDirection(bool directionArg) {

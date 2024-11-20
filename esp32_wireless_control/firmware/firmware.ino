@@ -36,7 +36,7 @@ void handleRoot() {
 
 void handleOn() {
   int tracking_speed = server.arg(TRACKING_SPEED).toInt();
-  TRACKING_RATES rate;
+  trackingRateS rate;
   switch (tracking_speed) {
     case 0:  //sidereal rate
       rate = TRACKING_SIDEREAL;
@@ -68,7 +68,7 @@ void handleSlewRequest() {    //add togther with
     //limit custom slew speed to 2-400
     slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                                                                               : slew_speed;
-    ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, slew_direction);
+    ra_axis.startSlew((2 * ra_axis.trackingRate) / slew_speed, slew_direction);
     server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
 }
@@ -79,7 +79,7 @@ void handleLeft() {           //add togther with
     //limit custom slew speed to 2-400
     slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                                                                               : slew_speed;
-    ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, 0);
+    ra_axis.startSlew((2 * ra_axis.trackingRate) / slew_speed, 0);
     server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
 }
@@ -90,7 +90,7 @@ void handleRight() {
     //limit custom slew speed to 2-400
     slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                                                                               : slew_speed;
-    ra_axis.startSlew((2 * ra_axis.tracking_rate) / slew_speed, 1);
+    ra_axis.startSlew((2 * ra_axis.trackingRate) / slew_speed, 1);
     server.send(200, MIME_TYPE_TEXT, SLEWING);
   }
 }
@@ -124,16 +124,16 @@ void handleSetCurrent() {
     intervalometer.currentSettings.mode = captureMode;
     intervalometer.currentSettings.exposureTime = server.arg(EXPOSURE_TIME).toInt();
     intervalometer.currentSettings.exposures = server.arg(EXPOSURES).toInt();
-    intervalometer.currentSettings.pre_delay_time = server.arg(PREDELAY).toInt();
-    intervalometer.currentSettings.delay_time = server.arg(DELAY).toInt();
+    intervalometer.currentSettings.preDelayTime = server.arg(PREDELAY).toInt();
+    intervalometer.currentSettings.delayTime = server.arg(DELAY).toInt();
     intervalometer.currentSettings.frames = server.arg(FRAMES).toInt();
     intervalometer.currentSettings.panAngle = server.arg(PAN_ANGLE).toFloat() / 100;
     intervalometer.currentSettings.panDirection = server.arg(PAN_DIRECTION).toInt();
-    intervalometer.currentSettings.post_tracking_on = server.arg(ENABLE_TRACKING).toInt();
+    intervalometer.currentSettings.enableTracking = server.arg(ENABLE_TRACKING).toInt();
     intervalometer.currentSettings.dither = server.arg(DITHER_CHOICE).toInt();
-    intervalometer.currentSettings.dither_frequency = server.arg(DITHER_FREQ).toInt();
-    intervalometer.currentSettings.focal_length = server.arg(FOCAL_LENGTH).toInt();
-    intervalometer.currentSettings.pixel_size = server.arg(PIXEL_SIZE).toFloat() / 100;
+    intervalometer.currentSettings.ditherFrequency = server.arg(DITHER_FREQ).toInt();
+    intervalometer.currentSettings.focalLength = server.arg(FOCAL_LENGTH).toInt();
+    intervalometer.currentSettings.pixelSize = server.arg(PIXEL_SIZE).toFloat() / 100;
     String currentMode = server.arg(MODE);
     if (currentMode == "save") {
       int preset = server.arg(PRESET).toInt();
@@ -156,17 +156,17 @@ void handleGetPresetExposureSettings() {
   String json;
   settings[MODE] = intervalometer.currentSettings.mode;
   settings[EXPOSURES] = intervalometer.currentSettings.exposures;
-  settings[DELAY] = intervalometer.currentSettings.delay_time;
-  settings[PREDELAY] = intervalometer.currentSettings.pre_delay_time;
+  settings[DELAY] = intervalometer.currentSettings.delayTime;
+  settings[PREDELAY] = intervalometer.currentSettings.preDelayTime;
   settings[EXPOSURE_TIME] = intervalometer.currentSettings.exposureTime;
-  settings[PAN_ANGLE] = intervalometer.currentSettings.panAngle;
+  settings[PAN_ANGLE] = intervalometer.currentSettings.panAngle * 100;
   settings[PAN_DIRECTION] = intervalometer.currentSettings.panDirection;
   settings[DITHER_CHOICE] = intervalometer.currentSettings.dither;
-  settings[DITHER_FREQ] = intervalometer.currentSettings.dither_frequency;
-  settings[ENABLE_TRACKING] = intervalometer.currentSettings.post_tracking_on;
+  settings[DITHER_FREQ] = intervalometer.currentSettings.ditherFrequency;
+  settings[ENABLE_TRACKING] = intervalometer.currentSettings.enableTracking;
   settings[FRAMES] = intervalometer.currentSettings.frames;
-  settings[PIXEL_SIZE] = intervalometer.currentSettings.pixel_size;
-  settings[FOCAL_LENGTH] = intervalometer.currentSettings.focal_length;
+  settings[PIXEL_SIZE] = intervalometer.currentSettings.pixelSize * 100;
+  settings[FOCAL_LENGTH] = intervalometer.currentSettings.focalLength;
   serializeJson(settings, json);
   Serial.println(json);
   server.send(200, "application/json", json);
@@ -256,6 +256,7 @@ void setup() {
   server.on("/right", HTTP_GET, handleRight);
   server.on("/stopslew", HTTP_GET, handleSlewOff);
   server.on("/setCurrent", HTTP_GET, handleSetCurrent);
+  server.on("/readPreset", HTTP_GET, handleGetPresetExposureSettings);
   server.on("/abort", HTTP_GET, handleAbortCapture);
   server.on("/status", HTTP_GET, handleStatusRequest);
   server.on("/version", HTTP_GET, handleVersion);
