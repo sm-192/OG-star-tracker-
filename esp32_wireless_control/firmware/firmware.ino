@@ -6,11 +6,10 @@
 #include <ArduinoJson.h>
 #include "config.h"
 #include "website_strings.h"
-#include "intervalometer.h"
 #include "axis.h"
 #include "hardwaretimer.h"
 #include "index_html.h"
-
+#include "intervalometer.h"
 // try to update every time there is breaking change
 const int firmware_version = 6;
 
@@ -124,7 +123,7 @@ void handleSetCurrent() {
     intervalometer.currentSettings.mode = captureMode;
     intervalometer.currentSettings.exposureTime = server.arg(EXPOSURE_TIME).toInt();
     intervalometer.currentSettings.exposures = server.arg(EXPOSURES).toInt();
-    intervalometer.currentSettings.preDelayTime = server.arg(PREDELAY).toInt();
+    intervalometer.currentSettings.preDelay = server.arg(PREDELAY).toInt();
     intervalometer.currentSettings.delayTime = server.arg(DELAY).toInt();
     intervalometer.currentSettings.frames = server.arg(FRAMES).toInt();
     intervalometer.currentSettings.panAngle = server.arg(PAN_ANGLE).toFloat() / 100;
@@ -137,6 +136,8 @@ void handleSetCurrent() {
     String currentMode = server.arg(MODE);
     if (currentMode == "save") {
       int preset = server.arg(PRESET).toInt();
+      // Serial.print("presetSet=");
+      // Serial.println(preset);
       intervalometer.saveSettingsToPreset(preset);
       server.send(200, MIME_TYPE_TEXT, "Saved Preset");
     } else if (currentMode == "start") {
@@ -151,13 +152,15 @@ void handleSetCurrent() {
 
 void handleGetPresetExposureSettings() {
   int preset = server.arg(PRESET).toInt();
+  // Serial.print("presetGet=");
+  // Serial.println(preset);
   intervalometer.readSettingsFromPreset(preset);
   JsonDocument settings;
   String json;
   settings[MODE] = intervalometer.currentSettings.mode;
   settings[EXPOSURES] = intervalometer.currentSettings.exposures;
   settings[DELAY] = intervalometer.currentSettings.delayTime;
-  settings[PREDELAY] = intervalometer.currentSettings.preDelayTime;
+  settings[PREDELAY] = intervalometer.currentSettings.preDelay;
   settings[EXPOSURE_TIME] = intervalometer.currentSettings.exposureTime;
   settings[PAN_ANGLE] = intervalometer.currentSettings.panAngle * 100;
   settings[PAN_DIRECTION] = intervalometer.currentSettings.panDirection;
@@ -213,7 +216,8 @@ void handleVersion() {
 
 void setup() {
   Serial.begin(115200);
-
+  EEPROM.begin(512);  //SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
+  intervalometer.readPresetsFromEEPROM();
 #ifdef AP
   WiFi.mode(WIFI_MODE_AP);
   WiFi.softAP(ssid, password);

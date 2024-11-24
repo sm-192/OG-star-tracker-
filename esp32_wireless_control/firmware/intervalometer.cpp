@@ -2,7 +2,7 @@
 //#include <cstdlib>
 #include "intervalometer.h"
 
-Intervalometer intervalometer(INTERV_PIN);
+
 
 void intervalometer_ISA() {
   intervalometer.nextState = true;
@@ -12,12 +12,12 @@ void intervalometer_ISA() {
 
 Intervalometer::Intervalometer(uint8_t triggerPinArg)
   : intervalometerTimer(2000, intervalometer_ISA) {  //2kHz resolution of 0.5 ms
-  EEPROM.begin(512);                                 //SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
+  
   currentState = INACTIVE;
   intervalometerTimer.stop();
   nextState = false;
   intervalometerActive = false;
-  readPresetsFromEEPROM();
+  //readPresetsFromEEPROM();
   timerStarted = false;
   axisMoving = false;
   total = 0;
@@ -25,7 +25,7 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
   currentSettings.mode = LONG_EXPOSURE_STILL;
   currentSettings.exposures = 1;
   currentSettings.delayTime = 1;
-  currentSettings.preDelayTime = 1;
+  currentSettings.preDelay = 1;
   currentSettings.exposureTime = 1;
   currentSettings.panAngle = 0.0;
   currentSettings.panDirection = true;
@@ -81,7 +81,7 @@ void Intervalometer::run() {
           break;
         }
         ra_axis.counterActive = currentSettings.mode == LONG_EXPOSURE_MOVIE ? true : false;
-        intervalometerTimer.start(2000 * currentSettings.preDelayTime, false);
+        intervalometerTimer.start(2000 * currentSettings.preDelay, false);
         timerStarted = true;
         intervalometerActive = true;
       }
@@ -210,11 +210,13 @@ void Intervalometer::readSettingsFromPreset(uint8_t preset) {
 }
 
 void Intervalometer::savePresetsToEEPPROM() {
-  writeObjectToEEPROM(PRESETS_EEPROM_START_LOCATION, presets);
+  Serial.print("writtenBytes: ");
+  Serial.println(writeObjectToEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
 }
 
 void Intervalometer::readPresetsFromEEPROM() {
-  readObjectFromEEPROM(PRESETS_EEPROM_START_LOCATION, presets);
+  Serial.print("readBytes: ");
+  Serial.println(readObjectFromEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
 }
 
 uint16_t Intervalometer::getStepsPerTenPixels() {
@@ -240,16 +242,27 @@ template<class T> int Intervalometer::writeObjectToEEPROM(int address, const T& 
   const byte* p = (const byte*)(const void*)&object;
   unsigned int i;
   for (i = 0; i < sizeof(object); i++) {
+    // Serial.print("Address = ");
+    // Serial.print(address);
+    // Serial.print(", Data = ");
+    // Serial.println(*p);
     EEPROM.write(address++, *p++);
+    EEPROM.commit();
   }
-  EEPROM.commit();
+  
   return i;
 }
 
 template<class T> int Intervalometer::readObjectFromEEPROM(int address, T& object) {
   byte* p = (byte*)(void*)&object;
   unsigned int i;
-  for (i = 0; i < sizeof(object); i++)
+  for (i = 0; i < sizeof(object); i++) {
+    // Serial.print("Address = ");
+    // Serial.print(address);
+    // Serial.print(", Data = ");
+    // Serial.println(EEPROM.read(address), HEX);
     *p++ = EEPROM.read(address++);
+  }
   return i;
 }
+Intervalometer intervalometer(INTERV_PIN);

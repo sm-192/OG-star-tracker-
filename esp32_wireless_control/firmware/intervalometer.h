@@ -29,7 +29,7 @@ private:
   bool axisMoving;
   int total;
   void savePresetsToEEPPROM();
-  void readPresetsFromEEPROM();
+
   uint8_t triggerPin;
   uint16_t exposures_taken;
   uint16_t frames_taken;
@@ -50,16 +50,16 @@ private:
 
   struct Settings {  //20 bytes
     Mode mode;
-    uint16_t exposures;        //2b
+    uint16_t exposures;       //2b
     uint16_t delayTime;       //seconds, max limt 18 h, 12 mins //2b
-    uint16_t preDelayTime;   //seconds //2b
-    uint16_t exposureTime;     //seconds, max limt 18 h, 12 mins //2b
-    float panAngle;            //degrees //4b
-    bool panDirection;         //
-    bool dither;               //1b
+    uint16_t preDelay;    //seconds //2b
+    uint16_t exposureTime;    //seconds, max limt 18 h, 12 mins //2b
+    float panAngle;           //degrees //4b
+    bool panDirection;        //
+    bool dither;              //1b
     uint8_t ditherFrequency;  //
-    bool enableTracking;     //1b
-    uint16_t frames;           //2b
+    bool enableTracking;      //1b
+    uint16_t frames;          //2b
     float pixelSize;          //micrometre (um) //4b
     uint16_t focalLength;     //mm //2b
   };
@@ -73,6 +73,7 @@ public:
   State currentState;
   Settings currentSettings;
   Settings presets[5];
+  void readPresetsFromEEPROM();
   void abortCapture();
   void startCapture();
   bool nextState;

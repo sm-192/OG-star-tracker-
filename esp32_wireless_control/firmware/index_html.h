@@ -249,7 +249,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
 
     function changeMode() {
       calculateCaptureTime();
-		  var mode = document.getElementById('mode-select').selectedIndex; 
+		  var mode = document.getElementById('mode').selectedIndex; 
       switch (mode) {
         case 0:
           document.getElementById('exposureDiv').style.display='flex'; 
@@ -295,15 +295,15 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
     }
 
 		function calculateCaptureTime() {
-      exposureTime = document.getElementById('mode-select').selectedIndex < 2 ? document.getElementById('exposure-time').valueAsNumber : 1;
+      exposureTime = document.getElementById('mode').selectedIndex < 2 ? document.getElementById('exposureTime').valueAsNumber : 1;
       exposures = document.getElementById('exposures').valueAsNumber; 
-			predelay = document.getElementById('pre-delay').valueAsNumber; 
+			predelay = document.getElementById('preDelay').valueAsNumber; 
       delay = document.getElementById('delay').valueAsNumber;
-      frames = document.getElementById('mode-select').selectedIndex == 1 ? document.getElementById('frames').valueAsNumber : 1;
-      panAngle = document.getElementById('mode-select').selectedIndex == 3 ? document.getElementById('pan-angle').valueAsNumber : 1;
-      ditherFreq = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('dither-frequency').valueAsNumber : 1;
-      focalLength = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('focal_len').valueAsNumber : 1;
-      pixelSize = document.getElementById('mode-select').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('pixelSize').valueAsNumber : 1;
+      frames = document.getElementById('mode').selectedIndex == 1 ? document.getElementById('frames').valueAsNumber : 1;
+      panAngle = document.getElementById('mode').selectedIndex == 3 ? document.getElementById('panAngle').valueAsNumber : 1;
+      ditherFreq = document.getElementById('mode').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('ditherFrequency').valueAsNumber : 1;
+      focalLength = document.getElementById('mode').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('focalLength').valueAsNumber : 1;
+      pixelSize = document.getElementById('mode').selectedIndex < 2 && document.getElementById('dither').selectedIndex == 1 ? document.getElementById('pixelSize').valueAsNumber : 1;
       total = exposureTime+exposures+predelay+delay+frames+panAngle+ditherFreq+focalLength+pixelSize;
  			captureTime  = (((delay + exposureTime)*exposures-delay)*frames) + predelay;
       if (isNaN(captureTime)) {
@@ -332,18 +332,18 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
 
     function sendCaptureInformation(mode) {
       var preset = document.getElementById('preset-select').selectedIndex;
-      var captureMode = document.getElementById('mode-select').selectedIndex;
+      var captureMode = document.getElementById('mode').selectedIndex;
       switch (captureMode) {
         case 0:
-          var exposureTime = document.getElementById('exposure-time').value.trim(); 
+          var exposureTime = document.getElementById('exposureTime').value.trim(); 
           var frames = "1";
           var panAngle = "1";
           var panDirection = "1";
-          var enableTracking = document.getElementById('enableTrackingEnd').selectedIndex;
+          var enableTracking = document.getElementById('enableTracking').selectedIndex;
           var ditherChoice = document.getElementById('dither').selectedIndex;
           if (ditherChoice == 1){
-            var ditherFreq = document.getElementById('dither-frequency').value.trim();
-            var focalLength = document.getElementById('focal_len').value.trim(); 
+            var ditherFreq = document.getElementById('ditherFrequency').value.trim();
+            var focalLength = document.getElementById('focalLength').value.trim(); 
             var pixSize = Math.floor(parseFloat(document.getElementById('pixelSize').value.trim()) * 100); 
           } else {
             var ditherFreq = "1";
@@ -352,15 +352,15 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           }
           break;
         case 1:
-          var exposureTime = document.getElementById('exposure-time').value.trim(); 
+          var exposureTime = document.getElementById('exposureTime').value.trim(); 
           var frames = document.getElementById('frames').value.trim();
           var panAngle = "1";
           var panDirection = "1";
-          var enableTracking = document.getElementById('enableTrackingEnd').selectedIndex;
+          var enableTracking = document.getElementById('enableTracking').selectedIndex;
           var ditherChoice = document.getElementById('dither').selectedIndex;
           if (ditherChoice == 1){
-            var ditherFreq = document.getElementById('dither-frequency').value.trim();
-            var focalLength = document.getElementById('focal_len').value.trim(); 
+            var ditherFreq = document.getElementById('ditherFrequency').value.trim();
+            var focalLength = document.getElementById('focalLength').value.trim(); 
             var pixSize = Math.floor(parseFloat(document.getElementById('pixelSize').value.trim()) * 100); 
           } else {
             var ditherFreq = "1";
@@ -382,7 +382,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         case 3:
           var exposureTime = "1"; 
           var frames = "1";
-          var panAngle = Math.floor(parseFloat(document.getElementById('pan_angle').value.trim()) * 100);
+          var panAngle = Math.floor(parseFloat(document.getElementById('panAngle').value.trim()) * 100);
           var panDirection = document.getElementById('panDirection').selectedIndex;
           var enableTracking = 0;
           var ditherChoice = 0;
@@ -393,33 +393,35 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
           default:
       }
       var exposures = document.getElementById('exposures').value.trim();
-      var predelay = document.getElementById('pre-delay').value.trim();
+      var preDelay = document.getElementById('preDelay').value.trim();
       var delay = document.getElementById('delay').value.trim();
 
-      var intervalometerUrl = '/setCurrent?mode=' + mode +'&preset=' + preset + '&captureMode=' + captureMode + '&exposureTime=' + exposureTime + '&exposures=' + exposures +'&predelay=' + predelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
+      var intervalometerUrl = '/setCurrent?mode=' + mode +'&preset=' + preset + '&captureMode=' + captureMode + '&exposureTime=' + exposureTime + '&exposures=' + exposures +'&preDelay=' + preDelay + '&delay=' + delay + '&frames=' + frames + '&panAngle=' + panAngle + '&panDirection=' + panDirection + '&enableTracking=' + enableTracking + '&ditherChoice=' + ditherChoice + '&ditherFreq=' + ditherFreq + '&focalLength=' + focalLength + '&pixSize=' + pixSize;
       sendRequest(intervalometerUrl); 
     }
 
-    function sendPresetReadRequest () {
+    function sendPresetReadRequest() {
       var preset = document.getElementById('preset-select').selectedIndex;
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
           var settings = JSON.parse(this.responseText);
-           document.getElementById('mode').value = settings.mode;
+           document.getElementById('mode').selectedIndex = settings.mode;
            document.getElementById('exposures').value = settings.exposures;
            document.getElementById('delay').value = settings.delay;
-           document.getElementById('preDelayTime').value = settings.preDelayTime;
+           document.getElementById('preDelay').value = settings.preDelay;
            document.getElementById('exposureTime').value = settings.exposureTime;
            document.getElementById('panAngle').value = settings.panAngle;
            document.getElementById('panDirection').value = settings.panDirection;
-           document.getElementById('dither').value = settings.dither;
+           document.getElementById('dither').selectedIndex = settings.dither;
            document.getElementById('ditherFrequency').value = settings.ditherFrequency;
-           document.getElementById('enableTracking').value = settings.enableTracking;
+           document.getElementById('enableTracking').selectedIndex = settings.enableTracking;
            document.getElementById('frames').value = settings.frames;
            document.getElementById('pixelSize').value = settings.pixelSize;
            document.getElementById('focalLength').value = settings.focalLength;
            document.getElementById('mode').dispatchEvent(new Event('change'));
+           document.getElementById('dither').dispatchEvent(new Event('change'));
+           document.getElementById('enableTracking').dispatchEvent(new Event('change'));
 
 
         }
@@ -500,12 +502,12 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
 		    <div class="button-group"> 
           <button class="right-separator" type="button" id='save-button' onclick="sendCaptureInformation('save');" disabled>SAVE PRESET</button> 
-          <button class="left-separator" type="button" onclick="sendRequest('/abort')">LOAD PRESET</button> 
+          <button class="left-separator" type="button" onclick="sendPresetReadRequest()">LOAD PRESET</button> 
         </div> 
         <br>
         <div class="grid2">
           <h3>Mode:</h3> 
-          <select aria-label="mode" id='mode-select' onchange="changeMode();"> 
+          <select aria-label="mode" id='mode' onchange="changeMode();"> 
             <option value='0'>Long Exposure Still</option> 
             <option value='1'>Long Exposure Movie</option> 
             <option value='2'>Day Time Lapse</option> 
@@ -514,7 +516,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
         <div class="grid2" id='exposureDiv'> 
           <h3>Exposure length:</h3> 
-          <input type='number' id='exposure-time' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <input type='number' id='exposureTime' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
           <h3>Number of exposures:</h3> 
@@ -522,7 +524,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
         <div class="grid2"> 
           <h3>Pre Delay Time:</h3> 
-          <input type='number' id='pre-delay' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <input type='number' id='preDelay' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
           <h3>Delay:</h3> 
@@ -534,18 +536,18 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
         <div class="grid2" id='panAngleDiv'> 
           <h3>Pan Angle:</h3> 
-          <input type='number' id='pan-angle' placeholder='degrees (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <input type='number' id='panAngle' placeholder='degrees (Ex. 30)' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='panDirectionDiv'> 
           <h3>Pan Direction:</h3> 
-          <select aria-label="panDirection" id='mode'> 
+          <select aria-label="panDirection" id='panDirection'> 
             <option value='0'>Left</option> 
             <option value='1'>Right</option> 
           </select> 
         </div> 
         <div class="grid2" id='trackEndDiv'> 
           <h3>Enable Tracking On End:</h3> 
-          <select aria-label="enableTracking" id='enableTrackingEnd'> 
+          <select aria-label="enableTracking" id='enableTracking'> 
             <option value='0'>No</option> 
             <option value='1'>Yes</option> 
           </select> 
@@ -559,11 +561,11 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         </div> 
         <div class="grid2" id='ditherFreqDiv'> 
           <h3>Dither Frequency:</h3> 
-          <input type="number" id="dither-frequency" placeholder='Number of Exposures' onchange="calculateCaptureTime();"> 
+          <input type="number" id="ditherFrequency" placeholder='Number of Exposures' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='ditherFocalLengthDiv'> 
           <h3>Lens focal length:</h3> 
-          <input type="number" id="focal_len" placeholder='in millimetres (Ex. 135)' onchange="calculateCaptureTime();"> 
+          <input type="number" id="focalLength" placeholder='in millimetres (Ex. 135)' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='ditherPixelSizeDiv'> 
           <h3>Camera pixel size:</h3> 
