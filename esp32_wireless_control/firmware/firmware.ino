@@ -95,6 +95,7 @@ void handleSetCurrent() {
         captureMode = Intervalometer::DAY_TIME_LAPSE_PAN;
         break;
       default:
+        captureMode = Intervalometer::LONG_EXPOSURE_STILL;
         break;
     }
     intervalometer.currentSettings.mode = captureMode;
@@ -181,6 +182,9 @@ void handleStatusRequest() {
         break;
       case Intervalometer::REWIND:
         server.send(200, MIME_TYPE_TEXT, "Capture: Rewind");
+        break;
+      case Intervalometer::INACTIVE:
+      default:
         break;
     }
   } else if (ra_axis.slewActive) {

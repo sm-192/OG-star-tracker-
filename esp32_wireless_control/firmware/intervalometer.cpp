@@ -131,7 +131,8 @@ void Intervalometer::run() {
           stepsToDither = randomDirection ? stepsToDither : stepsToDither * -1;
           ra_axis.setAxisTargetCount(stepsToDither + ra_axis.axisCountValue);
           if (ra_axis.targetCount != ra_axis.axisCountValue) {
-            ra_axis.goToTarget = ra_axis.counterActive = true;
+            ra_axis.goToTarget = true;
+            ra_axis.counterActive = true;
             ra_axis.startSlew(ra_axis.trackingRate / 3, randomDirection);  //dither at 6 x tracking rate.
           }
         }
@@ -156,14 +157,16 @@ void Intervalometer::run() {
         ra_axis.resetAxisCount();
         ra_axis.setAxisTargetCount(stepsToMove);
         if (ra_axis.targetCount != ra_axis.axisCountValue) {
-          ra_axis.counterActive = ra_axis.goToTarget = true;
+          ra_axis.counterActive = true;
+          ra_axis.goToTarget = true;
           ra_axis.startSlew(ra_axis.trackingRate / 10, currentSettings.panDirection);  //pan at 20x tracking rate
         }
       }
       if (!ra_axis.slewActive) {
         // Serial.println("pan_end");
         axisMoving = false;
-        ra_axis.counterActive = ra_axis.goToTarget = false;
+        ra_axis.counterActive = false;
+        ra_axis.goToTarget = false;
         currentState = DELAY;
       }
       break;
