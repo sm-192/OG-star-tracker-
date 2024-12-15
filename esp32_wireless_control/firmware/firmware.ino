@@ -10,6 +10,7 @@
 #include "hardwaretimer.h"
 #include "index_html.h"
 #include "intervalometer.h"
+#include "web_languages.h"
 // try to update every time there is breaking change
 const int firmware_version = 7;
 
@@ -25,10 +26,19 @@ unsigned long blink_millis = 0;
 
 WebServer server(80);
 DNSServer dnsServer;
+Languages language = EN;
 
 // Handle requests to the root URL ("/")
 void handleRoot() {
-  server.send(200, MIME_TYPE_HTML, html_content);
+  String htmlString = html_content;
+  // int placeholderCount = placeHolderArraySize();
+  
+  // for (int placeholder = 0; placeholder < numberOfHTMLStrings; placeholder++) {
+  //   Serial.println(*languageHTMLStrings[0][placeholder]);
+  //   //htmlString.replace(*HTMLplaceHolders[placeholder], languageHTMLStrings[language][placeholder]);
+  // }
+
+  server.send(200, MIME_TYPE_HTML, htmlString);
 }
 
 void handleOn() {
@@ -272,6 +282,11 @@ void setup() {
   digitalWrite(AXIS1_STEP, LOW);
   digitalWrite(EN12_n, LOW);
   //handleExposureSettings();
+  for (int placeholder = 0; placeholder < LANG_COUNT; placeholder++) {
+    
+    Serial.println(languageNames[0][placeholder]);
+    ;
+  }
 }
 
 void loop() {

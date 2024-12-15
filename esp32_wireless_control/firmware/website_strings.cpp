@@ -28,8 +28,7 @@ const char* CAPTURE_OFF = "Capture OFF";
 const char* CAPTURE_ALREADY_ON = "Capture Already ON";
 const char* CAPTURE_ALREADY_OFF = "Capture Already OFF";
 const char* CAPTURES_REMAINING = "%d Captures Remaining...";
-
-
 const char* MIME_TYPE_TEXT = "text/plain";
 const char* MIME_TYPE_HTML = "text/html";
+
 

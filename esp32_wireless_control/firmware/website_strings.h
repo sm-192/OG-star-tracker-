@@ -32,6 +32,7 @@ extern const char* CAPTURE_ALREADY_OFF;
 extern const char* CAPTURES_REMAINING;
 
 
+
 extern const char* MIME_TYPE_TEXT;
 extern const char* MIME_TYPE_HTML;
 
