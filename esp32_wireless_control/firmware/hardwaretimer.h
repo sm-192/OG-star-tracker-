@@ -10,13 +10,7 @@ class HardwareTimer {
   hw_timer_t* timer_pointer = NULL;
   void (*ISR_Function)();
 
-
-
-  
-
   public:
-
-
   HardwareTimer(uint64_t frequency);
   HardwareTimer(uint64_t frequency, void (*functionToCall)());
   void attachInterupt(void (*functionToCall)());

@@ -31,13 +31,22 @@ Languages language = EN;
 // Handle requests to the root URL ("/")
 void handleRoot() {
   String htmlString = html_content;
-  // int placeholderCount = placeHolderArraySize();
-  
-  // for (int placeholder = 0; placeholder < numberOfHTMLStrings; placeholder++) {
-  //   Serial.println(*languageHTMLStrings[0][placeholder]);
-  //   //htmlString.replace(*HTMLplaceHolders[placeholder], languageHTMLStrings[language][placeholder]);
-  // }
-
+  for (int placeholder = 0; placeholder < numberOfHTMLStrings; placeholder++) {
+    htmlString.replace(HTMLplaceHolders[placeholder], languageHTMLStrings[language][placeholder]);
+  }
+  char buffer[100];
+  String selectString = "";
+  for (int lang = 0; lang < LANG_COUNT; lang++) {
+    if (lang == language) {
+      sprintf(buffer, "<option value=\"%u\" selected>%s</option>\n", lang, languageNames[language][lang]);
+    } else {
+      sprintf(buffer, "<option value=\"%u\">%s</option>\n", lang, languageNames[language][lang]);
+    }
+    //Serial.println(buffer);
+    selectString.concat(buffer);
+    buffer[0] = '\0';
+  }
+  htmlString.replace("%LANG_SELECT%", selectString);
   server.send(200, MIME_TYPE_HTML, htmlString);
 }
 
@@ -60,12 +69,12 @@ void handleOn() {
   }
   int direction = server.arg(DIRECTION).toInt();
   ra_axis.startTracking(rate, direction);
-  server.send(200, MIME_TYPE_TEXT, TRACKING_ON);
+  server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_ON]);
 }
 
 void handleOff() {
   ra_axis.stopTracking();
-  server.send(200, MIME_TYPE_TEXT, TRACKING_OFF);
+  server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_OFF]);
 }
 
 void handleSlewRequest() {
@@ -76,7 +85,7 @@ void handleSlewRequest() {
     slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE ? MAX_CUSTOM_SLEW_RATE : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                                                                               : slew_speed;
     ra_axis.startSlew((2 * ra_axis.trackingRate) / slew_speed, direction);
-    server.send(200, MIME_TYPE_TEXT, SLEWING);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_SLEWING]);
   }
 }
 
@@ -84,30 +93,21 @@ void handleSlewOff() {
   if (ra_axis.slewActive) {  //if slew is active needed for ipad (passes multiple touchoff events)
     ra_axis.stopSlew();
   }
-  server.send(200, MIME_TYPE_TEXT, "SLEW CANCELLED");
+  server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_SLEW_CANCELLED]);
+}
+
+void handleSetLanguage() {
+  int lang = server.arg("lang").toInt();
+  language = static_cast<Languages>(lang);
+  EEPROM.write(LANG_EEPROM_ADDR, language);
+  EEPROM.commit();
+  server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_OK]);
 }
 
 void handleSetCurrent() {
   if (!intervalometer.intervalometerActive) {
     int modeInt = server.arg(CAPTURE_MODE).toInt();
-    Intervalometer::Mode captureMode;
-    switch (modeInt) {
-      case 0:  //Long Exp Still
-        captureMode = Intervalometer::LONG_EXPOSURE_STILL;
-        break;
-      case 1:  //Long Exp Movie
-        captureMode = Intervalometer::LONG_EXPOSURE_MOVIE;
-        break;
-      case 2:  //day time lapse
-        captureMode = Intervalometer::DAY_TIME_LAPSE;
-        break;
-      case 3:
-        captureMode = Intervalometer::DAY_TIME_LAPSE_PAN;
-        break;
-      default:
-        captureMode = Intervalometer::LONG_EXPOSURE_STILL;
-        break;
-    }
+    Intervalometer::Mode captureMode = static_cast<Intervalometer::Mode>(modeInt);
     intervalometer.currentSettings.mode = captureMode;
     intervalometer.currentSettings.exposureTime = server.arg(EXPOSURE_TIME).toInt();
     intervalometer.currentSettings.exposures = server.arg(EXPOSURES).toInt();
@@ -125,17 +125,17 @@ void handleSetCurrent() {
     if (currentMode == "save") {
       int preset = server.arg(PRESET).toInt();
       intervalometer.saveSettingsToPreset(preset);
-      server.send(200, MIME_TYPE_TEXT, "Saved Preset");
+      server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_SAVED_PRESET]);
     } else if (currentMode == "start") {
       if ((intervalometer.currentSettings.mode == Intervalometer::LONG_EXPOSURE_MOVIE || intervalometer.currentSettings.mode == Intervalometer::LONG_EXPOSURE_STILL) && !ra_axis.trackingActive) {
-        server.send(200, MIME_TYPE_TEXT, "TRACKING NOT ACTIVE!! Please start");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_NOT_ACTIVE]);
       } else {
         intervalometer.startCapture();
-        server.send(200, MIME_TYPE_TEXT, CAPTURE_ON);
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAPTURE_ON]);
       }
     }
   } else {
-    server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_ON);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAPTURE_ALREADY_ON]);
   }
 }
 
@@ -160,15 +160,15 @@ void handleGetPresetExposureSettings() {
   settings[FOCAL_LENGTH] = intervalometer.currentSettings.focalLength;
   serializeJson(settings, json);
   // Serial.println(json);
-  // server.send(200, "application/json", json);
+  server.send(200, "application/json", json);
 }
 
 void handleAbortCapture() {
   if (intervalometer.intervalometerActive) {
     intervalometer.abortCapture();
-    server.send(200, MIME_TYPE_TEXT, CAPTURE_OFF);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAPTURE_OFF]);
   } else {
-    server.send(200, MIME_TYPE_TEXT, CAPTURE_ALREADY_OFF);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAPTURE_ALREADY_OFF]);
   }
 }
 
@@ -176,31 +176,33 @@ void handleStatusRequest() {
   if (intervalometer.intervalometerActive) {
     switch (intervalometer.currentState) {
       case Intervalometer::PRE_DELAY:
-        server.send(200, MIME_TYPE_TEXT, "Capture: Predelay");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAP_PREDELAY]);
         break;
       case Intervalometer::CAPTURE:
-        server.send(200, MIME_TYPE_TEXT, "Capture: Exposing");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAP_EXPOSING]);
         break;
       case Intervalometer::DITHER:
-        server.send(200, MIME_TYPE_TEXT, "Capture: Dither");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAP_DITHER]);
         break;
       case Intervalometer::PAN:
-        server.send(200, MIME_TYPE_TEXT, "Capture: Panning");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAP_PANNING]);
         break;
       case Intervalometer::DELAY:
-        server.send(200, MIME_TYPE_TEXT, "Capture: Delay");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAP_DELAY]);
         break;
       case Intervalometer::REWIND:
-        server.send(200, MIME_TYPE_TEXT, "Capture: Rewind");
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_CAP_REWIND]);
         break;
       case Intervalometer::INACTIVE:
       default:
         break;
     }
   } else if (ra_axis.slewActive) {
-    server.send(200, MIME_TYPE_TEXT, SLEWING);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_SLEWING]);
   } else if (ra_axis.trackingActive) {
-    server.send(200, MIME_TYPE_TEXT, TRACKING_ON);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_ON]);
+  } else {
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_IDLE]);
   }
 
   if (ra_axis.slewActive) {
@@ -218,6 +220,13 @@ void handleVersion() {
 void setup() {
   Serial.begin(115200);
   EEPROM.begin(512);  //SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
+  uint8_t langNum = EEPROM.read(LANG_EEPROM_ADDR);
+  if (langNum >= LANG_COUNT) {
+    language = static_cast<Languages>(0);
+  } else {
+    language = static_cast<Languages>(langNum);
+  }
+
   intervalometer.readPresetsFromEEPROM();
 #ifdef AP
   WiFi.mode(WIFI_MODE_AP);
@@ -263,6 +272,7 @@ void setup() {
   server.on("/abort", HTTP_GET, handleAbortCapture);
   server.on("/status", HTTP_GET, handleStatusRequest);
   server.on("/version", HTTP_GET, handleVersion);
+  server.on("/setlang", HTTP_GET, handleSetLanguage);
 
   // Start the server
   server.begin();
@@ -282,11 +292,6 @@ void setup() {
   digitalWrite(AXIS1_STEP, LOW);
   digitalWrite(EN12_n, LOW);
   //handleExposureSettings();
-  for (int placeholder = 0; placeholder < LANG_COUNT; placeholder++) {
-    
-    Serial.println(languageNames[0][placeholder]);
-    ;
-  }
 }
 
 void loop() {

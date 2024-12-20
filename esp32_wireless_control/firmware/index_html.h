@@ -1,11 +1,11 @@
-#ifndef INDEX_HTML_H 
+#ifndef INDEX_HTML_H
 #define INDEX_HTML_H
 
 const char html_content[] = R"=====(
   <DOCTYPE html> 
   <html lang="en"> 
   <head> 
-  <title>OG Star Tracker Control Panel</title> 
+  <title>%STR_TITLE%</title> 
   <meta charset='utf-8'> 
   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
   <style> 
@@ -173,7 +173,8 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
   </style> 
   <script> 
     var lastClick = 0; 
-    var delay = 500; 
+    var delay = 500;
+    var currentLangIndex = 0; 
 
     function sendRequest(url) { 
       var xhr = new XMLHttpRequest(); 
@@ -194,10 +195,22 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-          document.getElementById('firmware').innerHTML = 'Firmware Version: ' + this.responseText;
+          document.getElementById('firmware').innerHTML = '%STR_FIRMWARE_VERSION%: ' + this.responseText;
         }
       };
       xhr.open('GET', '/version', true);
+      xhr.send();
+    }
+
+    function changeLanguage() {
+      var lang = document.getElementById('language-select').value;
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          window.location.reload();
+        }
+      };
+      xhr.open('GET', '/setlang?lang=' + lang, true);
       xhr.send();
     }
                           
@@ -320,7 +333,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
         hours = Math.floor(captureTime/3600);
         minutes = Math.floor((captureTime - 3600*hours)/60);
         seconds = Math.floor(captureTime - 3600*hours - minutes*60);
-        document.getElementById('captureTime').innerHTML = 'Capture Time: ' + hours + ' h, ' + minutes + ' m, ' + seconds + ' s';
+        document.getElementById('captureTime').innerHTML = '%STR_CAPTURE_TIME%: ' + hours + ' h, ' + minutes + ' m, ' + seconds + ' s';
       }
       saveButton = document.getElementById('save-button');
       captureButton = document.getElementById('capture-button');
@@ -441,6 +454,7 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
 
     }
 
+
   </script> 
   </head> 
   <body onload="handleLoad()">
@@ -448,156 +462,161 @@ ecb+yBpnGI+u4f3mmXHvX6sln9yPK6oXFwnrF9QP2D1E155JRPj/2PBNp9fMzv6D9chy0RLEZbNGlKPL
       <div class="header"> 
         <div id="logo"></div> 
       </div> 
-      <h1>TRACKER CONTROLLER</h1> 
+      <h1>%STR_TRACKER_CONTROLLER%</h1>
+      <div class="language-selector">
+            <select id="language-select" onchange="changeLanguage()">
+              %LANG_SELECT%
+            </select>
+      </div> 
       <div class="card">
-        <h2>Tracking</h2>
+        <h2>%STR_TRACKING%</h2>
         <div class="grid2"> 
-          <h3>Hemisphere:</h3> 
+          <h3>%STR_HEMISPHERE%:</h3> 
           <select aria-label="Hemisphere" id='hemisphere-select'> 
-            <option value='1' %north%>North</option> 
-            <option value='0' %south%>South</option> 
+            <option value='1'>%STR_NORTH%</option> 
+            <option value='0'>%STR_SOUTH%</option> 
           </select><br> 
         </div> 
         <div class="grid2"> 
-          <h3>Tracking Rate:</h3> 
+          <h3>%STR_TRACKING_RATE%:</h3> 
           <select aria-label="tspeed" id='tracking-speed-select'> 
-            <option value='0'>Sidereal</option> 
-            <option value='1'>Solar</option> 
-            <option value='2'>Lunar</option> 
+            <option value='0'>%STR_SIDEREAL%</option> 
+            <option value='1'>%STR_SOLAR%</option> 
+            <option value='2'>%STR_LUNAR%</option> 
           </select><br> 
         </div> 
         <div class="button-group"> 
-          <button class="right-separator" type="button" onclick="sendStartRequest('/on')">ON</button> 
-          <button class="left-separator" type="button" onclick="sendRequest('/off')">OFF</button> 
+          <button class="right-separator" type="button" onclick="sendStartRequest('/on')">%STR_BTN_ON%</button> 
+          <button class="left-separator" type="button" onclick="sendRequest('/off')">%STR_BTN_OFF%</button> 
         </div> 
       </div> 
       <div class="card"> 
-        <h2>Slew Control</h2> 
+        <h2>%STR_SLEW_CONTROL%</h2> 
         <div class="grid2"> 
-          <h3>Speed multiplier:</h3> 
+          <h3>%STR_SPEED_MULTIPLIER%:</h3> 
           <select aria-label="slew" id='slew-select' onchange="checkCustom();"> 
-            <option value='2'>2 x Tracking Rate</option> 
+            <option value='2'>2 x %STR_TRACKING_RATE%</option> 
             <option value='8'>8</option> 
             <option value='50'>50</option> 
             <option value='100'>100</option> 
             <option value='200'>200</option> 
             <option value='400'>400</option> 
-            <option value='custom'>custom</option> 
+            <option value='custom'>%STR_CUSTOM%</option> 
           </select> 
         </div> 
         <div class="grid2"> 
-          <h3 id='custom-speed-text' style="display:none; align-items:center;">Custom Speed:</h3> 
+          <h3 id='custom-speed-text' style="display:none; align-items:center;">%STR_CUSTOM_SPEED%:</h3> 
           <input id='custom-speed' type='number' value='2' min='2' max='400' style="display:none;"/> 
           <br> 
         </div> 
-        <h4>Hold direction button to slew</h4> 
+        <h4>%STR_SLEW_HINT%</h4> 
         <div class="button-group"> 
-          <button class="right-separator" type="button" ontouchstart="sendSlewRequest('left')" onmousedown="sendSlewRequest('left')" ontouchend="sendSlewStop()" onmouseup="sendSlewStop()" onmouseleave="sendSlewStop()" ontouchcancel="sendSlewStop()">SLEW LEFT</button> 
-          <button class="left-separator" type="button" ontouchstart="sendSlewRequest('right')" onmousedown="sendSlewRequest('right')" ontouchend="sendSlewStop()" onmouseup="sendSlewStop()" onmouseleave="sendSlewStop()" ontouchcancel="sendSlewStop()">SLEW RIGHT</button> 
+          <button class="right-separator" type="button" ontouchstart="sendSlewRequest('left')" onmousedown="sendSlewRequest('left')" ontouchend="sendSlewStop()" onmouseup="sendSlewStop()" onmouseleave="sendSlewStop()" ontouchcancel="sendSlewStop()">%STR_SLEW_LEFT%</button> 
+          <button class="left-separator" type="button" ontouchstart="sendSlewRequest('right')" onmousedown="sendSlewRequest('right')" ontouchend="sendSlewStop()" onmouseup="sendSlewStop()" onmouseleave="sendSlewStop()" ontouchcancel="sendSlewStop()">%STR_SLEW_RIGHT%</button> 
         </div> 
-        <button type="button" onclick="sendSlewStop()" >ABORT SLEW</button> 
+        <button type="button" onclick="sendSlewStop()" >%STR_ABORT_SLEW%</button> 
       </div> 
       <div class="card"> 
-        <h2>Intervalometer</h2>
+        <h2>%STR_INTERVALOMETER%</h2>
 		    <div class="grid2">
-          <h3>Preset:</h3> 
+          <h3>%STR_PRESET%:</h3> 
           <select aria-label="preset" id='preset-select' > 
-            <option value='0'>Preset 1</option> 
-            <option value='1'>Preset 2</option> 
-            <option value='2'>Preset 3</option> 
-            <option value='3'>Preset 4</option> 
-		        <option value='4'>Preset 5</option>
-            <option value='5'>Preset 6</option>
-            <option value='6'>Preset 7</option>
-            <option value='7'>Preset 8</option>
-            <option value='8'>Preset 9</option>
-            <option value='9'>Preset 10</option>
+            <option value='0'>%STR_PRESET% 1</option> 
+            <option value='1'>%STR_PRESET% 2</option> 
+            <option value='2'>%STR_PRESET% 3</option> 
+            <option value='3'>%STR_PRESET% 4</option> 
+		        <option value='4'>%STR_PRESET% 5</option>
+            <option value='5'>%STR_PRESET% 6</option>
+            <option value='6'>%STR_PRESET% 7</option>
+            <option value='7'>%STR_PRESET% 8</option>
+            <option value='8'>%STR_PRESET% 9</option>
+            <option value='9'>%STR_PRESET% 10</option>
           </select> 
         </div> 
 		    <div class="button-group"> 
-          <button class="right-separator" type="button" id='save-button' onclick="sendCaptureInformation('save');" disabled>SAVE PRESET</button> 
-          <button class="left-separator" type="button" onclick="sendPresetReadRequest()">LOAD PRESET</button> 
+          <button class="right-separator" type="button" id='save-button' onclick="sendCaptureInformation('save');" disabled>%STR_SAVE_PRESET%</button> 
+          <button class="left-separator" type="button" onclick="sendPresetReadRequest()">%STR_LOAD_PRESET%</button> 
         </div> 
         <br>
         <div class="grid2">
-          <h3>Mode:</h3> 
+          <h3>%STR_MODE%:</h3> 
           <select aria-label="mode" id='mode' onchange="changeMode();"> 
-            <option value='0'>Long Exposure Still</option> 
-            <option value='1'>Long Exposure Movie</option> 
-            <option value='2'>Day Time Lapse</option> 
-            <option value='3'>Day Time Lapse Pan</option> 
+            <option value='0'>%STR_LONG_EXPOSURE_STILL%</option> 
+            <option value='1'>%STR_LONG_EXPOSURE_MOVIE%</option> 
+            <option value='2'>%STR_DAY_TIME_LAPSE%</option> 
+            <option value='3'>%STR_DAY_TIME_LAPSE_PAN%</option> 
           </select> 
         </div> 
         <div class="grid2" id='exposureDiv'> 
-          <h3>Exposure length:</h3> 
-          <input type='number' id='exposureTime' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_EXPOSURE_LENGTH%:</h3> 
+          <input type='number' id='exposureTime' placeholder='%STR_EXPOSURE_HINT%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
-          <h3>Number of exposures:</h3> 
-          <input type='number' id='exposures' placeholder='nº of photos (Ex. 20)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_NO_EXPOSURES%:</h3> 
+          <input type='number' id='exposures' placeholder='%STR_NUM_EXPOSURES_HINT%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
-          <h3>Pre Delay Time:</h3> 
-          <input type='number' id='preDelay' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_PRE_DELAY%:</h3> 
+          <input type='number' id='preDelay' placeholder='%STR_EXPOSURE_HINT%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2"> 
-          <h3>Delay:</h3> 
-          <input type='number' id='delay' placeholder='in seconds (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_DELAY%:</h3> 
+          <input type='number' id='delay' placeholder='%STR_EXPOSURE_HINT%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='framesDiv'> 
-          <h3>Number of Frames:</h3> 
-          <input type='number' id='frames' placeholder='nº of frames (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_FRAMES%:</h3> 
+          <input type='number' id='frames' placeholder='%STR_NO_FRAMES%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='panAngleDiv'> 
-          <h3>Pan Angle:</h3> 
-          <input type='number' id='panAngle' placeholder='degrees (Ex. 30)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_PAN_ANGLE%:</h3> 
+          <input type='number' id='panAngle' placeholder='%STR_DEGREES%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='panDirectionDiv'> 
-          <h3>Pan Direction:</h3> 
+          <h3>%STR_PAN_DIRECTION%:</h3> 
           <select aria-label="panDirection" id='panDirection'> 
-            <option value='0'>Left</option> 
-            <option value='1'>Right</option> 
+            <option value='0'>%STR_LEFT%</option> 
+            <option value='1'>%STR_RIGHT%</option> 
           </select> 
         </div> 
         <div class="grid2" id='trackEndDiv'> 
-          <h3>Enable Tracking On End:</h3> 
+          <h3>%STR_ENABLE_TRACKING%:</h3> 
           <select aria-label="enableTracking" id='enableTracking'> 
-            <option value='0'>No</option> 
-            <option value='1'>Yes</option> 
+            <option value='0'>%STR_NO%</option> 
+            <option value='1'>%STR_YES%</option> 
           </select> 
         </div> 
         <div class="grid2" id='ditherChoiceDiv'> 
-          <h3>Dither:</h3> 
+          <h3>%STR_DITHER%:</h3> 
           <select aria-label="EnableDither" id='dither' onchange="chooseDither();"> 
-            <option value='0'>No</option> 
-            <option value='1'>Yes</option> 
+            <option value='0'>%STR_NO%</option> 
+            <option value='1'>%STR_YES%</option> 
           </select> 
         </div> 
         <div class="grid2" id='ditherFreqDiv'> 
-          <h3>Dither Frequency:</h3> 
-          <input type="number" id="ditherFrequency" placeholder='Number of Exposures' onchange="calculateCaptureTime();"> 
+          <h3>%STR_DITHER_FREQ%:</h3> 
+          <input type="number" id="ditherFrequency" placeholder='%STR_NUM_EXPOSURES_HINT%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='ditherFocalLengthDiv'> 
-          <h3>Lens focal length:</h3> 
-          <input type="number" id="focalLength" placeholder='in millimetres (Ex. 135)' onchange="calculateCaptureTime();"> 
+          <h3>%STR_FOCAL_LENGTH%:</h3> 
+          <input type="number" id="focalLength" placeholder='%STR_FOCAL_LENGTH_HINT%' onchange="calculateCaptureTime();"> 
         </div> 
         <div class="grid2" id='ditherPixelSizeDiv'> 
-          <h3>Camera pixel size:</h3> 
-          <input type="number" id="pixelSize" placeholder='in micrometre (Ex. 4.1)' step="0.01" onchange="calculateCaptureTime();"> 
+          <h3>%STR_PIXEL_SIZE%:</h3> 
+          <input type="number" id="pixelSize" placeholder='%STR_PIXEL_SIZE_HINT%' step="0.01" onchange="calculateCaptureTime();"> 
         </div> 
         <div class="button-group"> 
-          <button class="right-separator" type="button" id='capture-button' onclick="sendCaptureInformation('start');" disabled>START CAPTURE</button> 
-          <button class="left-separator" type="button" onclick="sendRequest('/abort')">ABORT CAPTURE</button> 
+          <button class="right-separator" type="button" id='capture-button' onclick="sendCaptureInformation('start');" disabled>%STR_START_CAPTURE%</button> 
+          <button class="left-separator" type="button" onclick="sendRequest('/abort')">%STR_ABORT_CAPTURE%</button> 
         </div>
         <div > 
-          <h3 id='captureTime'>Capture Time: 0 h, 0 m, 0 s</h3> 
+          <h3 id='captureTime'>%STR_CAPTURE_TIME%: 0 h, 0 m, 0 s</h3> 
         </div> 
       </div> 
       <div class="card"> 
-        <h2>Status</h2> 
-        <h3 id='status'>Test Message</h3> 
+        <h2>%STR_STATUS%</h2> 
+        <h3 id='status'>%STR_STATUS_MSG%</h3> 
       </div> 
-      <h4 id='firmware'>Firmware Version: </h4>
+      <h4 id='firmware'>%STR_FIRMWARE_VERSION%: </h4>
     </div> 
   </body> 
   </html>

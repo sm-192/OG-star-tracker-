@@ -21,6 +21,7 @@
 //LEDs for intervalometer status and general purpose status led
 #define INTERV_PIN 25
 #define STATUS_LED 26
+#define LANG_EEPROM_ADDR 0
 #define PRESETS_EEPROM_START_LOCATION 1
 
 //Stepper driver pins -- intended for TMC2209 for now

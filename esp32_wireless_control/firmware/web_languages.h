@@ -2,30 +2,37 @@
 #define WEB_LANGUAGES_H
 
 
-#define numberOfHTMLStrings 32
+#define numberOfHTMLStrings 57
 
 enum Languages {
   EN,
   CN,
-  // Add additional languages
+  // Add next language
   LANG_COUNT
 };
 
 
 
 enum Messages {
-  STR_TRACKING_ON,
-  STR_TRACKING_OFF,
-  STR_IDLE,
-  STR_SLEWING,
-  STR_INVALID_EXPOSURE,
-  STR_INVALID_DITHER,
-  STR_CAPTURE_ON,
-  STR_CAPTURE_OFF,
-  STR_CAPTURE_ALREADY_ON,
-  STR_CAPTURE_ALREADY_OFF,
-  STR_CAPTURES_REMAINING,
-  NUMBER_OF_MESSAGES
+  MSG_TRACKING_ON,
+  MSG_TRACKING_OFF,
+  MSG_SLEWING,
+  MSG_SLEW_CANCELLED,
+  MSG_OK,
+  MSG_SAVED_PRESET,
+  MSG_TRACKING_NOT_ACTIVE,
+  MSG_CAPTURE_ON,
+  MSG_CAPTURE_OFF,
+  MSG_CAPTURE_ALREADY_ON,
+  MSG_CAPTURE_ALREADY_OFF,
+  MSG_CAP_PREDELAY,
+  MSG_CAP_EXPOSING,
+  MSG_CAP_DITHER,
+  MSG_CAP_PANNING,
+  MSG_CAP_DELAY,
+  MSG_CAP_REWIND,
+  MSG_IDLE,
+  NUMBER_OF_MESSAGES,
 };
 
 
@@ -33,6 +40,7 @@ enum Messages {
 extern const char** languageNames[];
 extern const char** languageMessageStrings[];
 extern const char** languageHTMLStrings[];
+extern const char* HTMLplaceHolders[numberOfHTMLStrings];
 
 
 
