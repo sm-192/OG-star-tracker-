@@ -8,6 +8,12 @@ If you like this work, feel free to connect with me on [Github](https://github.c
  -- AP  : The ESP32 will create a wifi network which you can connect to
  -- STA : The ESP32 connects to an existing wifi network specified by you, Ex: phone hotspot. (Not fully tested)
 - Integrated intervalometer which can control your camera shutter, no need to buy extra hardware. Exposures can be controlled via the webpage
+  - Intervalometer Modes:
+    - Long Exposure Still: Classic astro mode with tracking to get long exposures on the same target. Optional dithering.
+    - Long Exposure Movie: Long exposures with tracking and dither plus at the end of a set of exposures the axis is rewound (a frame) and the next set started. This give the ability to create a movie          of the night sky moving over a terrestrial object when couple with a video making software.
+    -  Day Time Lapse: Standard time lapse with exposure settings controlled by the camera.
+    -  Day Time Lapse with Pan: Standard time lapse with exposure settings controlled by the camera plus a pan of X degrees in between every exposure.
+- Presets : Up to 10 preset intervalometer settings can be saved for retrieval next session.
 - USB port to power a Dew Heater
 - Slewing supported at different speeds.
 
