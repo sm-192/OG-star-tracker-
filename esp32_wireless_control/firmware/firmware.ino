@@ -3,6 +3,7 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
+#include <freertos/FreeRTOS.h>
 #include <string.h>
 
 #include "axis.h"
@@ -13,11 +14,13 @@
 #include "web_languages.h"
 #include "website_strings.h"
 
-unsigned long blink_millis = 0;
-
 WebServer server(WEBSERVER_PORT);
 DNSServer dnsServer;
 Languages language = EN;
+
+void webserverTask(void* pvParameters);
+void dnsserverTask(void* pvParameters);
+void intervalometerTask(void* pvParameters);
 
 // Handle requests to the root URL ("/")
 void handleRoot()
@@ -257,19 +260,59 @@ void handleVersion()
 
 void setup()
 {
+    // Start the debug serial connection
     Serial.begin(115200);
     EEPROM.begin(512); // SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
     uint8_t langNum = EEPROM.read(LANG_EEPROM_ADDR);
-    if (langNum >= LANG_COUNT)
-    {
-        language = static_cast<Languages>(0);
-    }
-    else
-    {
-        language = static_cast<Languages>(langNum);
-    }
 
-    intervalometer.readPresetsFromEEPROM();
+    if (langNum >= LANG_COUNT)
+        language = static_cast<Languages>(0);
+    else
+        language = static_cast<Languages>(langNum);
+
+    // Initialize the pins
+    pinMode(INTERV_PIN, OUTPUT);
+    pinMode(STATUS_LED, OUTPUT);
+    pinMode(AXIS1_STEP, OUTPUT);
+    pinMode(AXIS1_DIR, OUTPUT);
+    pinMode(EN12_n, OUTPUT);
+    pinMode(MS1, OUTPUT);
+    pinMode(MS2, OUTPUT);
+    digitalWrite(AXIS1_STEP, LOW);
+    digitalWrite(EN12_n, LOW);
+    // handleExposureSettings();
+
+    if (xTaskCreate(intervalometerTask, "intervalometerTask", 1024, NULL, 1, NULL))
+        Serial.println("Starting intervalometer task");
+    if (xTaskCreate(webserverTask, "webserverTask", 4096, NULL, 1, NULL))
+        Serial.println("Starting webserver task");
+    if (xTaskCreate(dnsserverTask, "dnsserverTask", 1024, NULL, 1, NULL))
+        Serial.println("Starting dnsserver task");
+}
+
+void loop()
+{
+    int delay_ticks = 0;
+    for (;;)
+    {
+        if (ra_axis.slewActive)
+        {
+            // Blink status LED if mount is in slew mode
+            digitalWrite(STATUS_LED, !digitalRead(STATUS_LED));
+            delay_ticks = 150; // Delay for 150 ms
+        }
+        else
+        {
+            // Turn on status LED if sidereal tracking is ON
+            digitalWrite(STATUS_LED, ra_axis.trackingActive ? HIGH : LOW);
+            delay_ticks = 1000; // Delay for 1 second
+        }
+        vTaskDelay(delay_ticks);
+    }
+}
+
+void webserverTask(void* pvParameters)
+{
 #ifdef AP
     WiFi.mode(WIFI_MODE_AP);
     WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
@@ -301,9 +344,6 @@ void setup()
         Serial.print(".");
     }
 #endif
-    dnsServer.setTTL(300);
-    dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
-    dnsServer.start(DNS_PORT, WEBSITE_NAME, WiFi.softAPIP());
 
     server.on("/", HTTP_GET, handleRoot);
     server.on("/on", HTTP_GET, handleOn);
@@ -325,40 +365,35 @@ void setup()
 #else
     Serial.println(WiFi.localIP());
 #endif
-    pinMode(INTERV_PIN, OUTPUT);
-    pinMode(STATUS_LED, OUTPUT);
-    pinMode(AXIS1_STEP, OUTPUT);
-    pinMode(AXIS1_DIR, OUTPUT);
-    pinMode(EN12_n, OUTPUT);
-    pinMode(MS1, OUTPUT);
-    pinMode(MS2, OUTPUT);
-    digitalWrite(AXIS1_STEP, LOW);
-    digitalWrite(EN12_n, LOW);
-    // handleExposureSettings();
+
+    for (;;)
+    {
+        server.handleClient();
+        vTaskDelay(1);
+    }
 }
 
-void loop()
+void dnsserverTask(void* pvParameters)
 {
-    if (ra_axis.slewActive)
-    {
-        // blink status led if mount is in slew mode
-        if (millis() - blink_millis >= 150)
-        {
-            digitalWrite(STATUS_LED, !digitalRead(STATUS_LED));
-            blink_millis = millis();
-        }
-    }
-    else
-    {
-        // turn on status led if sidereal tracking is ON
-        digitalWrite(STATUS_LED, ra_axis.trackingActive);
-    }
+    dnsServer.setTTL(300);
+    dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
+    dnsServer.start(DNS_PORT, WEBSITE_NAME, WiFi.softAPIP());
 
-    if (intervalometer.intervalometerActive)
+    for (;;)
     {
-        intervalometer.run();
+        dnsServer.processNextRequest();
+        vTaskDelay(1);
     }
+}
 
-    server.handleClient();
-    dnsServer.processNextRequest();
+void intervalometerTask(void* pvParameters)
+{
+    intervalometer.readPresetsFromEEPROM();
+
+    for (;;)
+    {
+        if (intervalometer.intervalometerActive)
+            intervalometer.run();
+        vTaskDelay(1);
+    }
 }
