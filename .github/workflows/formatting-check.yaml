@@ -1,5 +1,7 @@
 name: OGStarTracker CI
-on: [push]
+on: 
+  push:
+
 jobs:
   formatting-check:
     name: Formatting Check
