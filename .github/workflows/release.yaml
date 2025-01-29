@@ -19,7 +19,7 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Build OGStarTracker
-        run: pio run --project-dir esp32_wireless_control/firmware
+        run: pio run --project-dir esp32_wireless_control/firmware -e ogstartracker_release
 
       - name: Upload Build Artifact
         if: ${{ success() }}
