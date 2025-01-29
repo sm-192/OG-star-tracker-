@@ -29,8 +29,8 @@
 #ifndef WIFI_SSID
 #define WIFI_SSID "OG Star Tracker" // change to your SSID
 #endif
-#ifndef WIFI_PASS
-#define WIFI_PASS "password123" // change to your password, must be 8+ characters
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "password123" // change to your password, must be 8+ characters
 #endif
 // If you are using AP mode, you can access the website using the below URL
 #ifndef WEBSITE_NAME
