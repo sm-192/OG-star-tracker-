@@ -282,11 +282,11 @@ void setup()
     digitalWrite(EN12_n, LOW);
     // handleExposureSettings();
 
-    if (xTaskCreate(intervalometerTask, "intervalometerTask", 1024, NULL, 1, NULL))
+    if (xTaskCreate(intervalometerTask, "intervalometerTask", 2048, NULL, 1, NULL))
         Serial.println("Starting intervalometer task");
     if (xTaskCreate(webserverTask, "webserverTask", 4096, NULL, 1, NULL))
         Serial.println("Starting webserver task");
-    if (xTaskCreate(dnsserverTask, "dnsserverTask", 1024, NULL, 1, NULL))
+    if (xTaskCreate(dnsserverTask, "dnsserverTask", 2048, NULL, 1, NULL))
         Serial.println("Starting dnsserver task");
 }
 
