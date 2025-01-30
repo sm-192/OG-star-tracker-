@@ -1,6 +1,7 @@
 #include "esp32-hal-gpio.h"
 // #include <cstdlib>
 #include "intervalometer.h"
+#include "uart.h"
 
 void intervalometer_ISA()
 {
@@ -60,7 +61,7 @@ void Intervalometer::run()
     switch (currentState)
     {
         case INACTIVE:
-            // Serial.println(INACTIVE);
+            // print_out(INACTIVE);
             ra_axis.stopSlew();
             intervalometerTimer.stop();
             digitalWrite(triggerPin, LOW);
@@ -80,7 +81,7 @@ void Intervalometer::run()
 
             if (!timerStarted)
             {
-                // Serial.println("PREDELAY_START");
+                // print_out("PREDELAY_START");
                 if ((currentSettings.mode == DAY_TIME_LAPSE ||
                      currentSettings.mode == DAY_TIME_LAPSE_PAN) &&
                     ra_axis.trackingActive)
@@ -95,7 +96,7 @@ void Intervalometer::run()
             if (nextState)
             {
                 intervalometerTimer.stop();
-                // Serial.println("PREDELAY_STOP");
+                // print_out("PREDELAY_STOP");
                 nextState = false;
                 timerStarted = false;
                 currentState = CAPTURE;
@@ -104,7 +105,7 @@ void Intervalometer::run()
         case CAPTURE:
             if (!timerStarted)
             { // nightime modes
-                // Serial.println("capture_start");
+                // print_out("capture_start");
                 if (currentSettings.mode == LONG_EXPOSURE_MOVIE && !ra_axis.counterActive)
                 {
                     ra_axis.resetAxisCount();
@@ -128,7 +129,7 @@ void Intervalometer::run()
             {
                 digitalWrite(triggerPin, LOW);
                 intervalometerTimer.stop();
-                // Serial.println("capture_end");
+                // print_out("capture_end");
                 nextState = false;
                 timerStarted = false;
                 exposures_taken++;
@@ -142,7 +143,7 @@ void Intervalometer::run()
             {
                 if (!axisMoving)
                 {
-                    // Serial.println("dither_start");
+                    // print_out("dither_start");
                     axisMoving = true;
                     uint8_t randomDirection = biasedRandomDirection(previousDitherDirection);
                     previousDitherDirection = randomDirection;
@@ -161,7 +162,7 @@ void Intervalometer::run()
                 }
                 if (!ra_axis.slewActive)
                 {
-                    // Serial.println("dither_end");
+                    // print_out("dither_end");
                     if (currentSettings.mode != LONG_EXPOSURE_MOVIE)
                     {
                         ra_axis.counterActive = false;
@@ -178,7 +179,7 @@ void Intervalometer::run()
         case PAN:
             if (!axisMoving)
             {
-                // Serial.println("pan_start");
+                // print_out("pan_start");
                 axisMoving = true;
                 uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.panAngle);
                 int64_t stepsToMove = currentSettings.panDirection
@@ -196,7 +197,7 @@ void Intervalometer::run()
             }
             if (!ra_axis.slewActive)
             {
-                // Serial.println("pan_end");
+                // print_out("pan_end");
                 axisMoving = false;
                 ra_axis.counterActive = false;
                 ra_axis.goToTarget = false;
@@ -214,14 +215,14 @@ void Intervalometer::run()
             {
                 if (!timerStarted)
                 {
-                    // Serial.println("delay_start");
+                    // print_out("delay_start");
                     intervalometerTimer.start(2000 * currentSettings.delayTime, false);
                     timerStarted = true;
                 }
                 if (nextState)
                 {
                     intervalometerTimer.stop();
-                    // Serial.println("delay_end");
+                    // print_out("delay_end");
                     nextState = false;
                     timerStarted = false;
                     currentState = CAPTURE;
@@ -232,7 +233,7 @@ void Intervalometer::run()
         case REWIND:
             if (!axisMoving)
             {
-                // Serial.println("rewind_start");
+                // print_out("rewind_start");
                 axisMoving = true;
                 exposures_taken = 0;
                 frames_taken++;
@@ -246,7 +247,7 @@ void Intervalometer::run()
             }
             if (!ra_axis.slewActive)
             {
-                // Serial.println("rewind_end");
+                // print_out("rewind_end");
                 axisMoving = false;
                 currentState = CAPTURE;
             }
@@ -267,14 +268,14 @@ void Intervalometer::readSettingsFromPreset(uint8_t preset)
 
 void Intervalometer::savePresetsToEEPPROM()
 {
-    Serial.print("writtenBytes: ");
-    Serial.println(writeObjectToEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
+    print_out("writtenBytes: ");
+    print_out("%d", writeObjectToEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
 }
 
 void Intervalometer::readPresetsFromEEPROM()
 {
-    Serial.print("readBytes: ");
-    Serial.println(readObjectFromEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
+    print_out("readBytes: ");
+    print_out("%d", readObjectFromEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
 }
 
 uint16_t Intervalometer::getStepsPerTenPixels()
@@ -305,10 +306,10 @@ template <class T> int Intervalometer::writeObjectToEEPROM(int address, const T&
     unsigned int i;
     for (i = 0; i < sizeof(object); i++)
     {
-        // Serial.print("Address = ");
-        // Serial.print(address);
-        // Serial.print(", Data = ");
-        // Serial.println(*p);
+        // print_out("Address = ");
+        // print_out(address);
+        // print_out(", Data = ");
+        // print_out(*p);
         EEPROM.write(address++, *p++);
         EEPROM.commit();
     }
@@ -322,10 +323,10 @@ template <class T> int Intervalometer::readObjectFromEEPROM(int address, T& obje
     unsigned int i;
     for (i = 0; i < sizeof(object); i++)
     {
-        // Serial.print("Address = ");
-        // Serial.print(address);
-        // Serial.print(", Data = ");
-        // Serial.println(EEPROM.read(address), HEX);
+        // print_out("Address = ");
+        // print_out(address);
+        // print_out(", Data = ");
+        // print_out(EEPROM.read(address), HEX);
         *p++ = EEPROM.read(address++);
     }
     return i;
