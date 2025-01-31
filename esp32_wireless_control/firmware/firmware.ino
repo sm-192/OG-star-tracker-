@@ -316,8 +316,8 @@ void webserverTask(void* pvParameters)
 #ifdef AP
     WiFi.mode(WIFI_MODE_AP);
     WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
-    delay(500);
-    Serial.println("Creating Wifi Network");
+    vTaskDelay(500);
+    Serial.println("Creating Wifi Network\r\n");
 
     // ANDROID 10 WORKAROUND==================================================
     // set new WiFi configurations
@@ -332,7 +332,7 @@ void webserverTask(void* pvParameters)
     Serial.println("WiFi: Disabled AMPDU...");
     esp_wifi_init(&my_config); // set the new config = "Disable AMPDU"
     esp_wifi_start();          // Restart WiFi
-    delay(500);
+    vTaskDelay(500);
     // ANDROID 10 WORKAROUND==================================================
 #else
     WiFi.mode(WIFI_MODE_STA); // Set ESP32 in station mode
@@ -340,8 +340,8 @@ void webserverTask(void* pvParameters)
     Serial.println("Connecting to Network in STA mode");
     while (WiFi.status() != WL_CONNECTED)
     {
-        delay(1000);
-        Serial.print(".");
+        vTaskDelay(1000);
+        Serial.println(".");
     }
 #endif
 
