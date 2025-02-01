@@ -345,7 +345,7 @@ void setup()
     // Initialize Wifi and web server
     setupWireless();
 
-    if (xTaskCreate(intervalometerTask, "intervalometerTask", 2048, NULL, 1, NULL))
+    if (xTaskCreate(intervalometerTask, "intervalometerTask", 4096, NULL, 1, NULL))
         Serial.print("Starting intervalometer task");
     if (xTaskCreate(webserverTask, "webserverTask", 4096, NULL, 1, NULL))
         Serial.print("Starting webserver task");
