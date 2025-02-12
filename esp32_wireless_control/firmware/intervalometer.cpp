@@ -114,7 +114,7 @@ void Intervalometer::run()
                 {
                     intervalometerTimer.start(2000, false); // 1 sec should cover day time
                                                             // exposures.
-                    delay(10);
+                    vTaskDelay(10);
                     digitalWrite(triggerPin, LOW);
                 }
                 else

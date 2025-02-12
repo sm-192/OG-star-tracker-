@@ -258,6 +258,66 @@ void handleVersion()
     server.send(200, MIME_TYPE_TEXT, (String) INTERNAL_VERSION);
 }
 
+void setupWireless()
+{
+#ifdef AP
+    WiFi.mode(WIFI_MODE_AP);
+    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
+    vTaskDelay(500);
+    Serial.println("Creating Wifi Network\r\n");
+
+    // ANDROID 10 WORKAROUND==================================================
+    // set new WiFi configurations
+    WiFi.disconnect();
+    Serial.println("reconfig WiFi...");
+    /*Stop wifi to change config parameters*/
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    /*Disabling AMPDU RX is necessary for Android 10 support*/
+    wifi_init_config_t my_config = WIFI_INIT_CONFIG_DEFAULT(); // We use the default config ...
+    my_config.ampdu_rx_enable = 0;                             //... and modify only what we want.
+    Serial.println("WiFi: Disabled AMPDU...");
+    esp_wifi_init(&my_config); // set the new config = "Disable AMPDU"
+    esp_wifi_start();          // Restart WiFi
+    vTaskDelay(500);
+    // ANDROID 10 WORKAROUND==================================================
+#else
+    WiFi.mode(WIFI_MODE_STA); // Set ESP32 in station mode
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.println("Connecting to Network in STA mode");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        vTaskDelay(1000);
+        Serial.println(".");
+    }
+#endif
+
+    server.on("/", HTTP_GET, handleRoot);
+    server.on("/on", HTTP_GET, handleOn);
+    server.on("/off", HTTP_GET, handleOff);
+    server.on("/startslew", HTTP_GET, handleSlewRequest);
+    server.on("/stopslew", HTTP_GET, handleSlewOff);
+    server.on("/setCurrent", HTTP_GET, handleSetCurrent);
+    server.on("/readPreset", HTTP_GET, handleGetPresetExposureSettings);
+    server.on("/abort", HTTP_GET, handleAbortCapture);
+    server.on("/status", HTTP_GET, handleStatusRequest);
+    server.on("/version", HTTP_GET, handleVersion);
+    server.on("/setlang", HTTP_GET, handleSetLanguage);
+
+    // Start the server
+    server.begin();
+
+#ifdef AP
+    Serial.println(WiFi.softAPIP());
+#else
+    Serial.println(WiFi.localIP());
+#endif
+
+    dnsServer.setTTL(300);
+    dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
+    dnsServer.start(DNS_PORT, WEBSITE_NAME, WiFi.softAPIP());
+}
+
 void setup()
 {
     // Start the debug serial connection
@@ -282,12 +342,15 @@ void setup()
     digitalWrite(EN12_n, LOW);
     // handleExposureSettings();
 
-    if (xTaskCreate(intervalometerTask, "intervalometerTask", 2048, NULL, 1, NULL))
-        Serial.println("Starting intervalometer task");
+    // Initialize Wifi and web server
+    setupWireless();
+
+    if (xTaskCreate(intervalometerTask, "intervalometerTask", 4096, NULL, 1, NULL))
+        Serial.print("Starting intervalometer task");
     if (xTaskCreate(webserverTask, "webserverTask", 4096, NULL, 1, NULL))
-        Serial.println("Starting webserver task");
+        Serial.print("Starting webserver task");
     if (xTaskCreate(dnsserverTask, "dnsserverTask", 2048, NULL, 1, NULL))
-        Serial.println("Starting dnsserver task");
+        Serial.print("Starting dnsserver task");
 }
 
 void loop()
@@ -313,59 +376,6 @@ void loop()
 
 void webserverTask(void* pvParameters)
 {
-#ifdef AP
-    WiFi.mode(WIFI_MODE_AP);
-    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
-    delay(500);
-    Serial.println("Creating Wifi Network");
-
-    // ANDROID 10 WORKAROUND==================================================
-    // set new WiFi configurations
-    WiFi.disconnect();
-    Serial.println("reconfig WiFi...");
-    /*Stop wifi to change config parameters*/
-    esp_wifi_stop();
-    esp_wifi_deinit();
-    /*Disabling AMPDU RX is necessary for Android 10 support*/
-    wifi_init_config_t my_config = WIFI_INIT_CONFIG_DEFAULT(); // We use the default config ...
-    my_config.ampdu_rx_enable = 0;                             //... and modify only what we want.
-    Serial.println("WiFi: Disabled AMPDU...");
-    esp_wifi_init(&my_config); // set the new config = "Disable AMPDU"
-    esp_wifi_start();          // Restart WiFi
-    delay(500);
-    // ANDROID 10 WORKAROUND==================================================
-#else
-    WiFi.mode(WIFI_MODE_STA); // Set ESP32 in station mode
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.println("Connecting to Network in STA mode");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(1000);
-        Serial.print(".");
-    }
-#endif
-
-    server.on("/", HTTP_GET, handleRoot);
-    server.on("/on", HTTP_GET, handleOn);
-    server.on("/off", HTTP_GET, handleOff);
-    server.on("/startslew", HTTP_GET, handleSlewRequest);
-    server.on("/stopslew", HTTP_GET, handleSlewOff);
-    server.on("/setCurrent", HTTP_GET, handleSetCurrent);
-    server.on("/readPreset", HTTP_GET, handleGetPresetExposureSettings);
-    server.on("/abort", HTTP_GET, handleAbortCapture);
-    server.on("/status", HTTP_GET, handleStatusRequest);
-    server.on("/version", HTTP_GET, handleVersion);
-    server.on("/setlang", HTTP_GET, handleSetLanguage);
-
-    // Start the server
-    server.begin();
-
-#ifdef AP
-    Serial.println(WiFi.softAPIP());
-#else
-    Serial.println(WiFi.localIP());
-#endif
-
     for (;;)
     {
         server.handleClient();
@@ -375,10 +385,6 @@ void webserverTask(void* pvParameters)
 
 void dnsserverTask(void* pvParameters)
 {
-    dnsServer.setTTL(300);
-    dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
-    dnsServer.start(DNS_PORT, WEBSITE_NAME, WiFi.softAPIP());
-
     for (;;)
     {
         dnsServer.processNextRequest();
