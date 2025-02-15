@@ -6,6 +6,7 @@ const char* chineseLangLanguageNames[LANG_COUNT] = {
     // LANGUAGE NAMES
     "英语", // ENGLISH
     "中文", // CHINESE
+    "德语", // GERMAN
 };
 
 const char* chineseLangMessageStrings[NUMBER_OF_MESSAGES] = {
