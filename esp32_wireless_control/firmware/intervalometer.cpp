@@ -61,7 +61,7 @@ void Intervalometer::run()
     switch (currentState)
     {
         case INACTIVE:
-            // print_out(INACTIVE);
+            print_out("Intervalometer: INACTIVE");
             ra_axis.stopSlew();
             intervalometerTimer.stop();
             digitalWrite(triggerPin, LOW);
@@ -81,7 +81,7 @@ void Intervalometer::run()
 
             if (!timerStarted)
             {
-                // print_out("PREDELAY_START");
+                print_out("Intervalometer: PREDELAY_START");
                 if ((currentSettings.mode == DAY_TIME_LAPSE ||
                      currentSettings.mode == DAY_TIME_LAPSE_PAN) &&
                     ra_axis.trackingActive)
@@ -96,7 +96,7 @@ void Intervalometer::run()
             if (nextState)
             {
                 intervalometerTimer.stop();
-                // print_out("PREDELAY_STOP");
+                print_out("Intervalometer: PREDELAY_STOP");
                 nextState = false;
                 timerStarted = false;
                 currentState = CAPTURE;
@@ -105,7 +105,7 @@ void Intervalometer::run()
         case CAPTURE:
             if (!timerStarted)
             { // nightime modes
-                // print_out("capture_start");
+                print_out("Intervalometer: capture_start");
                 if (currentSettings.mode == LONG_EXPOSURE_MOVIE && !ra_axis.counterActive)
                 {
                     ra_axis.resetAxisCount();
@@ -129,7 +129,7 @@ void Intervalometer::run()
             {
                 digitalWrite(triggerPin, LOW);
                 intervalometerTimer.stop();
-                // print_out("capture_end");
+                print_out("Intervalometer: capture_end");
                 nextState = false;
                 timerStarted = false;
                 exposures_taken++;
@@ -143,7 +143,7 @@ void Intervalometer::run()
             {
                 if (!axisMoving)
                 {
-                    // print_out("dither_start");
+                    print_out("Intervalometer: dither_start");
                     axisMoving = true;
                     uint8_t randomDirection = biasedRandomDirection(previousDitherDirection);
                     previousDitherDirection = randomDirection;
@@ -162,7 +162,7 @@ void Intervalometer::run()
                 }
                 if (!ra_axis.slewActive)
                 {
-                    // print_out("dither_end");
+                    print_out("Intervalometer: dither_end");
                     if (currentSettings.mode != LONG_EXPOSURE_MOVIE)
                     {
                         ra_axis.counterActive = false;
@@ -179,7 +179,7 @@ void Intervalometer::run()
         case PAN:
             if (!axisMoving)
             {
-                // print_out("pan_start");
+                print_out("Intervalometer: pan_start");
                 axisMoving = true;
                 uint64_t arcSecsToMove = uint64_t(3600.0 * currentSettings.panAngle);
                 int64_t stepsToMove = currentSettings.panDirection
@@ -197,7 +197,7 @@ void Intervalometer::run()
             }
             if (!ra_axis.slewActive)
             {
-                // print_out("pan_end");
+                print_out("Intervalometer: pan_end");
                 axisMoving = false;
                 ra_axis.counterActive = false;
                 ra_axis.goToTarget = false;
@@ -215,14 +215,14 @@ void Intervalometer::run()
             {
                 if (!timerStarted)
                 {
-                    // print_out("delay_start");
+                    print_out("Intervalometer: delay_start");
                     intervalometerTimer.start(2000 * currentSettings.delayTime, false);
                     timerStarted = true;
                 }
                 if (nextState)
                 {
                     intervalometerTimer.stop();
-                    // print_out("delay_end");
+                    print_out("Intervalometer: delay_end");
                     nextState = false;
                     timerStarted = false;
                     currentState = CAPTURE;
@@ -233,7 +233,7 @@ void Intervalometer::run()
         case REWIND:
             if (!axisMoving)
             {
-                // print_out("rewind_start");
+                print_out("Intervalometer: rewind_start");
                 axisMoving = true;
                 exposures_taken = 0;
                 frames_taken++;
@@ -247,7 +247,7 @@ void Intervalometer::run()
             }
             if (!ra_axis.slewActive)
             {
-                // print_out("rewind_end");
+                print_out("Intervalometer: rewind_end");
                 axisMoving = false;
                 currentState = CAPTURE;
             }
