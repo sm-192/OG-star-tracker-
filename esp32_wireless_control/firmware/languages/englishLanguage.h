@@ -31,6 +31,23 @@ const char* englishLangMessageStrings[NUMBER_OF_MESSAGES] = {
     "Idle",                                       // MSG_IDLE
 };
 
+const char* englishLangErrorMessageStrings[NUMBER_OF_ERROR_MESSAGES] = {
+    // ERROR MESSAGE STRINGS
+    "Invalid Capture Mode",          // ERR_MSG_INVALID_CAPTURE_MODE
+    "Invalid Exposure Length",       // ERR_MSG_INVALID_EXPOSURE_LENGTH
+    "Invalid Number of Exposures",   // ERR_MSG_INVALID_EXPOSURE_AMOUNT
+    "Invalid Predelay Time",         // ERR_MSG_INVALID_PREDELAY_TIME
+    "Invalid Delay Time",            // ERR_MSG_INVALID_DELAY_TIME
+    "Invalid Frame Amount",          // ERR_MSG_INVALID_FRAME_AMOUNT
+    "Invalid Pan Angle",             // ERR_MSG_INVALID_PAN_ANGLE
+    "Invalid Pan Direction",         // ERR_MSG_INVALID_PAN_DIRECTION
+    "Invalid Enable Tracking Value", // ERR_MSG_INVALID_ENABLE_TRACKING_VALUE
+    "Invalid Dither Choice",         // ERR_MSG_INVALID_DITHER_CHOICE
+    "Invalid Dither Frequency",      // ERR_MSG_INVALID_DITHER_FREQUENCY
+    "Invalid Focal Length",          // ERR_MSG_INVALID_FOCAL_LENGTH
+    "Invalid Pixel Size"             // ERR_MSG_INVALID_PIXEL_SIZE
+};
+
 const char* englishLangHTMLStrings[numberOfHTMLStrings] = {
     // HTML STRINGS
     "OG Star Tracker Control Panel", // STR_TITLE
@@ -66,7 +83,7 @@ const char* englishLangHTMLStrings[numberOfHTMLStrings] = {
     "in seconds (Ex. 30)",           // STR_EXPOSURE_HINT
     "Number of exposures",           // STR_NO_EXPOSURES
     "number of photos (Ex. 20)",     // STR_NUM_EXPOSURES_HINT
-    "Pre Delay Time",                // STR_PRE_DELAY
+    "Pre Delay Time (5s)",           // STR_PRE_DELAY
     "Delay",                         // STR_DELAY
     "Number of Frames",              // STR_FRAMES
     "nº of frames",                  // STR_NO_FRAMES

@@ -31,6 +31,23 @@ const char* chineseLangMessageStrings[NUMBER_OF_MESSAGES] = {
     "空闲"                                        // MSG_IDLE
 };
 
+const char* chineseLangErrorMessageStrings[NUMBER_OF_ERROR_MESSAGES] = {
+    // ERROR MESSAGE STRINGS
+    "无效的拍摄模式",   // ERR_MSG_INVALID_CAPTURE_MODE
+    "无效的曝光时长",   // ERR_MSG_INVALID_EXPOSURE_LENGTH
+    "无效的曝光数量",   // ERR_MSG_INVALID_EXPOSURE_AMOUNT
+    "无效的预延迟时间", // ERR_MSG_INVALID_PREDELAY_TIME
+    "无效的延迟时间",   // ERR_MSG_INVALID_DELAY_TIME
+    "无效的帧数量",     // ERR_MSG_INVALID_FRAME_AMOUNT
+    "无效的平移角度",   // ERR_MSG_INVALID_PAN_ANGLE
+    "无效的平移方向",   // ERR_MSG_INVALID_PAN_DIRECTION
+    "无效的启用跟踪值", // ERR_MSG_INVALID_ENABLE_TRACKING_VALUE
+    "无效的抖动选择",   // ERR_MSG_INVALID_DITHER_CHOICE
+    "无效的抖动频率",   // ERR_MSG_INVALID_DITHER_FREQUENCY
+    "无效的焦距",       // ERR_MSG_INVALID_FOCAL_LENGTH
+    "无效的像素大小"    // ERR_MSG_INVALID_PIXEL_SIZE
+};
+
 const char* chineseLangHTMLStrings[numberOfHTMLStrings] = {
     // HTML STRINGS
     "OG 赤道仪控制面板",        // STR_TITLE
@@ -66,7 +83,7 @@ const char* chineseLangHTMLStrings[numberOfHTMLStrings] = {
     "单位：秒 (例如: 30)",      // STR_EXPOSURE_HINT
     "Number of exposures",      // STR_NO_EXPOSURES
     "拍摄张数 (例如: 20)",      // STR_NUM_EXPOSURES_HINT
-    "Pre Delay Time",           // STR_PRE_DELAY
+    "Pre Delay Time (5s)",      // STR_PRE_DELAY
     "Delay",                    // STR_DELAY
     "Number of Frames",         // STR_FRAMES
     "nº of frames",             // STR_NO_FRAMES

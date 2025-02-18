@@ -3,6 +3,7 @@
 
 #include "axis.h"
 #include "config.h"
+#include "error.h"
 #include "hardwaretimer.h"
 #include <EEPROM.h>
 
@@ -20,7 +21,8 @@ class Intervalometer
         LONG_EXPOSURE_STILL,
         LONG_EXPOSURE_MOVIE,
         DAY_TIME_LAPSE,
-        DAY_TIME_LAPSE_PAN
+        DAY_TIME_LAPSE_PAN,
+        MAX_MODES
     };
 
   private:
@@ -71,6 +73,7 @@ class Intervalometer
     State currentState;
     Settings currentSettings;
     Settings presets[10];
+    ErrorMessage currentErrorMessage;
     void readPresetsFromEEPROM();
     void abortCapture();
     void startCapture();
