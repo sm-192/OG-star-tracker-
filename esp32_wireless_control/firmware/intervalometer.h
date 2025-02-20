@@ -43,16 +43,16 @@ class Intervalometer
     uint8_t previousDitherDirection;
 
     struct Settings
-    { // 20 bytes
-        Mode mode;
+    {                            // 28 bytes
+        Mode mode;               // 4b
         uint16_t exposures;      // 2b
         uint16_t delayTime;      // seconds, max limt 18 h, 12 mins //2b
         uint16_t preDelay;       // seconds //2b
         uint16_t exposureTime;   // seconds, max limt 18 h, 12 mins //2b
         float panAngle;          // degrees //4b
-        bool panDirection;       //
+        bool panDirection;       // 1b
         bool dither;             // 1b
-        uint8_t ditherFrequency; //
+        uint8_t ditherFrequency; // 1b
         bool enableTracking;     // 1b
         uint16_t frames;         // 2b
         float pixelSize;         // micrometre (um) //4b
