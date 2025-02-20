@@ -7,6 +7,7 @@ enum Languages
 {
     EN,
     CN,
+    DE,
     // Add next language
     LANG_COUNT
 };

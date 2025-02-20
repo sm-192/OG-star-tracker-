@@ -1,24 +1,28 @@
 #include "web_languages.h"
-#include "chineseLanguage.h"
-#include "englishLanguage.h"
+#include "languages/chineseLanguage.h"
+#include "languages/englishLanguage.h"
+#include "languages/germanLanguage.h"
 // include Next language
 
 /* clang-format off */
 const char** languageNames[LANG_COUNT] = {
   englishLangLanguageNames,
-  chineseLangLanguageNames
+  chineseLangLanguageNames,
+  germanLangLanguageNames
   //nextLanguageLangNames  Array here
 };
 
 const char** languageMessageStrings[LANG_COUNT] = {
   englishLangMessageStrings,
-  chineseLangMessageStrings
+  chineseLangMessageStrings,
+  germanLangMessageStrings
   //nextLanguageMessageStrings Array here
 };
 
 const char** languageHTMLStrings[LANG_COUNT] = {
   englishLangHTMLStrings,
-  chineseLangHTMLStrings
+  chineseLangHTMLStrings,
+  germanLangHTMLStrings
   //nextLanguageHTMLStrings Array here
 };
 
