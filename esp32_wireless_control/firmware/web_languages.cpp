@@ -19,6 +19,13 @@ const char** languageMessageStrings[LANG_COUNT] = {
   //nextLanguageMessageStrings Array here
 };
 
+const char** languageErrorMessageStrings[LANG_COUNT] = {
+  englishLangErrorMessageStrings,
+  chineseLangErrorMessageStrings,
+  germanLangErrorMessageStrings
+  //nextLanguageErrorMessageStrings Array here
+};
+
 const char** languageHTMLStrings[LANG_COUNT] = {
   englishLangHTMLStrings,
   chineseLangHTMLStrings,

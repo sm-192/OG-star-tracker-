@@ -31,6 +31,23 @@ const char* germanLangMessageStrings[NUMBER_OF_MESSAGES] = {
     "Leerlauf",                                         // MSG_IDLE
 };
 
+const char* germanLangErrorMessageStrings[NUMBER_OF_ERROR_MESSAGES] = {
+    // ERROR MESSAGE STRINGS
+    "Ungültiger Aufnahmemodus",         // ERR_MSG_INVALID_CAPTURE_MODE
+    "Ungültige Belichtungszeit",        // ERR_MSG_INVALID_EXPOSURE_LENGTH
+    "Ungültige Anzahl an Belichtungen", // ERR_MSG_INVALID_EXPOSURE_AMOUNT
+    "Ungültige Vorlaufzeit",            // ERR_MSG_INVALID_PREDELAY_TIME
+    "Ungültige Verzögerungszeit",       // ERR_MSG_INVALID_DELAY_TIME
+    "Ungültige Bildmenge",              // ERR_MSG_INVALID_FRAME_AMOUNT
+    "Ungültiger Schwenkwinkel",         // ERR_MSG_INVALID_PAN_ANGLE
+    "Ungültige Schwenkrichtung",        // ERR_MSG_INVALID_PAN_DIRECTION
+    "Ungültiger Aktivierungswert",      // ERR_MSG_INVALID_ENABLE_TRACKING_VALUE
+    "Ungültige Zitterwahl",             // ERR_MSG_INVALID_DITHER_CHOICE
+    "Ungültige Zitterfrequenz",         // ERR_MSG_INVALID_DITHER_FREQUENCY
+    "Ungültige Brennweite",             // ERR_MSG_INVALID_FOCAL_LENGTH
+    "Ungültige Pixelgröße"              // ERR_MSG_INVALID_PIXEL_SIZE
+};
+
 const char* germanLangHTMLStrings[numberOfHTMLStrings] = {
     // HTML STRINGS
     "OG Star Tracker Steuerungspanel",              // STR_TITLE
@@ -66,7 +83,7 @@ const char* germanLangHTMLStrings[numberOfHTMLStrings] = {
     "in Sekunden (z.B. 30)",                        // STR_EXPOSURE_HINT
     "Anzahl der Belichtungen",                      // STR_NO_EXPOSURES
     "Anzahl der Fotos (z.B. 20)",                   // STR_NUM_EXPOSURES_HINT
-    "Vorlaufzeit",                                  // STR_PRE_DELAY
+    "Vorlaufzeit (5s)",                             // STR_PRE_DELAY
     "Verzögerung",                                  // STR_DELAY
     "Anzahl der Bilder",                            // STR_FRAMES
     "nº der Bilder",                                // STR_NO_FRAMES

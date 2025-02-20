@@ -74,7 +74,12 @@ void handleOn()
     }
     int direction = server.arg(DIRECTION).toInt();
     ra_axis.startTracking(rate, direction);
-    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_ON]);
+
+    if (intervalometer.currentErrorMessage == ErrorMessage::ERR_MSG_NONE)
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_ON]);
+    else
+        server.send(200, MIME_TYPE_TEXT,
+                    languageErrorMessageStrings[language][intervalometer.currentErrorMessage]);
 }
 
 void handleOff()
@@ -120,21 +125,116 @@ void handleSetCurrent()
 {
     if (!intervalometer.intervalometerActive)
     {
+        // Reset the current error message
+        intervalometer.currentErrorMessage = ERR_MSG_NONE;
+
         int modeInt = server.arg(CAPTURE_MODE).toInt();
+        if (modeInt < 0 || modeInt >= Intervalometer::Mode::MAX_MODES)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_CAPTURE_MODE;
+            return;
+        }
         Intervalometer::Mode captureMode = static_cast<Intervalometer::Mode>(modeInt);
         intervalometer.currentSettings.mode = captureMode;
-        intervalometer.currentSettings.exposureTime = server.arg(EXPOSURE_TIME).toInt();
-        intervalometer.currentSettings.exposures = server.arg(EXPOSURES).toInt();
-        intervalometer.currentSettings.preDelay = server.arg(PREDELAY).toInt();
-        intervalometer.currentSettings.delayTime = server.arg(DELAY).toInt();
-        intervalometer.currentSettings.frames = server.arg(FRAMES).toInt();
-        intervalometer.currentSettings.panAngle = server.arg(PAN_ANGLE).toFloat() / 100;
-        intervalometer.currentSettings.panDirection = server.arg(PAN_DIRECTION).toInt();
-        intervalometer.currentSettings.enableTracking = server.arg(ENABLE_TRACKING).toInt();
-        intervalometer.currentSettings.dither = server.arg(DITHER_CHOICE).toInt();
-        intervalometer.currentSettings.ditherFrequency = server.arg(DITHER_FREQUENCY).toInt();
-        intervalometer.currentSettings.focalLength = server.arg(FOCAL_LENGTH).toInt();
-        intervalometer.currentSettings.pixelSize = server.arg(PIXEL_SIZE).toFloat() / 100;
+
+        int exposureTime = server.arg(EXPOSURE_TIME).toInt();
+        if (exposureTime <= 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_EXPOSURE_LENGTH;
+            return;
+        }
+        intervalometer.currentSettings.exposureTime = exposureTime;
+
+        int exposures = server.arg(EXPOSURES).toInt();
+        if (exposures <= 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_EXPOSURE_AMOUNT;
+            return;
+        }
+        intervalometer.currentSettings.exposures = exposures;
+
+        int preDelay = server.arg(PREDELAY).toInt();
+        if (preDelay < 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_PREDELAY_TIME;
+            return;
+        }
+        else if (preDelay == 0)
+            preDelay = 5;
+        intervalometer.currentSettings.preDelay = preDelay;
+
+        int delayTime = server.arg(DELAY).toInt();
+        if (delayTime < 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_DELAY_TIME;
+            return;
+        }
+        intervalometer.currentSettings.delayTime = delayTime;
+
+        int frames = server.arg(FRAMES).toInt();
+        if (frames <= 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_FRAME_AMOUNT;
+            return;
+        }
+        intervalometer.currentSettings.frames = frames;
+
+        float panAngle = server.arg(PAN_ANGLE).toFloat() / 100;
+        if (panAngle < 0.0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_PAN_ANGLE;
+            return;
+        }
+        intervalometer.currentSettings.panAngle = panAngle;
+
+        int panDirection = server.arg(PAN_DIRECTION).toInt();
+        if (panDirection < 0 || panDirection > 1)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_PAN_DIRECTION;
+            return;
+        }
+        intervalometer.currentSettings.panDirection = panDirection;
+
+        int enableTracking = server.arg(ENABLE_TRACKING).toInt();
+        if (enableTracking < 0 || enableTracking > 1)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_ENABLE_TRACKING_VALUE;
+            return;
+        }
+        intervalometer.currentSettings.enableTracking = enableTracking;
+
+        int dither = server.arg(DITHER_CHOICE).toInt();
+        if (dither < 0 || dither > 1)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_DITHER_CHOICE;
+            return;
+        }
+        intervalometer.currentSettings.dither = dither;
+
+        int ditherFrequency = server.arg(DITHER_FREQUENCY).toInt();
+        if (ditherFrequency <= 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_DITHER_FREQUENCY;
+            return;
+        }
+        intervalometer.currentSettings.ditherFrequency = ditherFrequency;
+
+        int focalLength = server.arg(FOCAL_LENGTH).toInt();
+        if (focalLength <= 0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_FOCAL_LENGTH;
+            return;
+        }
+        intervalometer.currentSettings.focalLength = focalLength;
+
+        float pixelSize = server.arg(PIXEL_SIZE).toFloat() / 100;
+        if (pixelSize <= 0.0)
+        {
+            intervalometer.currentErrorMessage = ERR_MSG_INVALID_PIXEL_SIZE;
+            return;
+        }
+        intervalometer.currentSettings.pixelSize = pixelSize;
+
         String currentMode = server.arg(MODE);
         if (currentMode == "save")
         {
@@ -242,7 +342,11 @@ void handleStatusRequest()
     }
     else
     {
-        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_IDLE]);
+        if (intervalometer.currentErrorMessage == ErrorMessage::ERR_MSG_NONE)
+            server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_IDLE]);
+        else
+            server.send(200, MIME_TYPE_TEXT,
+                        languageErrorMessageStrings[language][intervalometer.currentErrorMessage]);
     }
 
     if (ra_axis.slewActive)

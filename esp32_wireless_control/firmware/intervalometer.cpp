@@ -12,6 +12,7 @@ Intervalometer::Intervalometer(uint8_t triggerPinArg)
 { // 2kHz resolution of 0.5 ms
 
     currentState = INACTIVE;
+    currentErrorMessage = ERR_MSG_NONE;
     intervalometerTimer.stop();
     nextState = false;
     intervalometerActive = false;

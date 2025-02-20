@@ -3,6 +3,8 @@
 
 #define numberOfHTMLStrings 57
 
+#include "error.h"
+
 enum Languages
 {
     EN,
@@ -37,6 +39,7 @@ enum Messages
 
 extern const char** languageNames[];
 extern const char** languageMessageStrings[];
+extern const char** languageErrorMessageStrings[];
 extern const char** languageHTMLStrings[];
 extern const char* HTMLplaceHolders[numberOfHTMLStrings];
 
