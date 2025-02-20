@@ -9,7 +9,7 @@
 #define c_DIRECTION 1                // 1 is for north hemisphere and 0 for south hemisphere
 #define RA_INVERT_DIR_PIN 0          // if need to invert direction pin set to 1
 #define DEC_INVERT_DIR_PIN 0         // if need to invert direction pin set to 1
-#define DEFAULT_ENABLE_TRACKING 0    // set to 1 to enable tracking at startup
+#define DEFAULT_ENABLE_TRACKING 1    // set to 1 to enable tracking at startup
 #define DITHER_DISTANCE_X10_PIXELS 5 // set max distance to dither in multiple of 10 pixels
 #define MAX_CUSTOM_SLEW_RATE 400     // Set max custom slew rate to X tracking rate
 #define MIN_CUSTOM_SLEW_RATE 2       // Set min custom slew rate to X tracking rate
