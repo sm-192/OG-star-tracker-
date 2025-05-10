@@ -6,7 +6,7 @@
 
 extern HardwareTimer slewTimeOut;
 
-#ifdef STEPPER_0_9
+#if STEPPER_TYPE == STEPPER_0_9
 enum trackingRateS
 {
     TRACKING_SIDEREAL = 2659383, // SIDEREAL (23h,56 min)

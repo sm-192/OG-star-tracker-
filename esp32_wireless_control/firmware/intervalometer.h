@@ -7,7 +7,7 @@
 #include "hardwaretimer.h"
 #include <EEPROM.h>
 
-#ifdef STEPPER_0_9
+#if STEPPER_TYPE == STEPPER_0_9
 #define ARCSEC_PER_STEP 2.0
 #else
 #define ARCSEC_PER_STEP 4.0

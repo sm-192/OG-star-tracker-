@@ -1,6 +1,9 @@
 #ifndef CONFIG
 #define CONFIG
 
+#define STEPPER_0_9 0 // 0.9 degree stepper motor
+#define STEPPER_1_8 1 // 1.8 degree stepper motor
+
 /*To build in Arduino IDE, install esp32 boards V3.0x and the Arduinojson library by Benoit
  * Blanchon*/
 /*****USER DEFINED*****/
@@ -13,9 +16,6 @@
 #define DITHER_DISTANCE_X10_PIXELS 5 // set max distance to dither in multiple of 10 pixels
 #define MAX_CUSTOM_SLEW_RATE 400     // Set max custom slew rate to X tracking rate
 #define MIN_CUSTOM_SLEW_RATE 2       // Set min custom slew rate to X tracking rate
-#define STEPPER_0_9                  // uncomment this line if you have a 0.9 degree NEMA17
-// #define STEPPER_1_8   //uncomment this line if you have a 1.8 degree NEMA17, and comment the
-// above line
 
 #ifndef TRACKING_RATE
 // Available tracking rates:
@@ -25,6 +25,10 @@
 #define TRACKING_RATE TRACKING_SIDEREAL // default tracking rate
 #endif
 
+// Configure the stepper motor type
+#ifndef STEPPER_TYPE
+#define STEPPER_TYPE STEPPER_0_9 // 0.9 degree stepper motor
+#endif
 // Configure the wifi settings if you are not using platformio
 #ifndef WIFI_SSID
 #define WIFI_SSID "OG Star Tracker" // change to your SSID
