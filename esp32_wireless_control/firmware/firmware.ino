@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include <DNSServer.h>
+#include <ErriezSerialTerminal.h>
 #include <WebServer.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
@@ -7,6 +8,7 @@
 #include <string.h>
 
 #include "axis.h"
+#include "common_strings.h"
 #include "config.h"
 #include "hardwaretimer.h"
 #include "index_html.h"
@@ -15,6 +17,7 @@
 #include "web_languages.h"
 #include "website_strings.h"
 
+SerialTerminal term(CLI_NEWLINE_CHAR, CLI_DELIMITER_CHAR);
 WebServer server(WEBSERVER_PORT);
 DNSServer dnsServer;
 Languages language = EN;
@@ -428,6 +431,12 @@ void setup()
 {
     // Start the debug serial connection
     setup_uart(&Serial, 115200);
+
+    print_out_tbl(HEAD_LINE);
+    print_out_tbl(HEAD_LINE_TRACKER);
+    print_out("***         Running on %d MHz         ***\r\n", getCpuFrequencyMhz());
+    print_out_tbl(HEAD_LINE_VERSION);
+
     EEPROM.begin(512); // SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
     uint8_t langNum = EEPROM.read(LANG_EEPROM_ADDR);
 
@@ -453,9 +462,10 @@ void setup()
 
     if (xTaskCreate(uartTask, "UartTask", 4096, NULL, 1, NULL))
     {
-        print_out("\033c");
-        print_out("Starting uart task");
+        print_out_tbl(TSK_CLEAR_SCREEN);
+        print_out_tbl(TSK_START_UART);
     }
+
     if (xTaskCreate(intervalometerTask, "intervalometerTask", 4096, NULL, 1, NULL))
         print_out("Starting intervalometer task");
     if (xTaskCreatePinnedToCore(webserverTask, "webserverTask", 4096, NULL, 1, NULL, 0))
