@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "axis.h"
+#include "commands.h"
 #include "common_strings.h"
 #include "config.h"
 #include "hardwaretimer.h"
@@ -23,6 +24,7 @@ DNSServer dnsServer;
 Languages language = EN;
 
 void uartTask(void* pvParameters);
+void consoleTask(void* pvParameters);
 void webserverTask(void* pvParameters);
 void dnsserverTask(void* pvParameters);
 void intervalometerTask(void* pvParameters);
@@ -460,18 +462,24 @@ void setup()
     // Initialize Wifi and web server
     setupWireless();
 
-    if (xTaskCreate(uartTask, "UartTask", 4096, NULL, 1, NULL))
+    // Initialize the console serial
+    setup_terminal(&term);
+
+    if (xTaskCreate(uartTask, "uart", 4096, NULL, 1, NULL))
     {
         print_out_tbl(TSK_CLEAR_SCREEN);
         print_out_tbl(TSK_START_UART);
     }
 
-    if (xTaskCreate(intervalometerTask, "intervalometerTask", 4096, NULL, 1, NULL))
-        print_out("Starting intervalometer task");
-    if (xTaskCreatePinnedToCore(webserverTask, "webserverTask", 4096, NULL, 1, NULL, 0))
-        print_out("Starting webserver task");
-    if (xTaskCreate(dnsserverTask, "dnsserverTask", 2048, NULL, 1, NULL))
-        print_out("Starting dnsserver task");
+    if (xTaskCreate(consoleTask, "console", 4096, NULL, 1, NULL))
+        print_out_tbl(TSK_START_CONSOLE);
+    ;
+    if (xTaskCreate(intervalometerTask, "intervalometer", 4096, NULL, 1, NULL))
+        print_out_tbl(TSK_START_INTERVALOMETER);
+    if (xTaskCreatePinnedToCore(webserverTask, "webserver", 4096, NULL, 1, NULL, 0))
+        print_out_tbl(TSK_START_WEBSERVER);
+    if (xTaskCreate(dnsserverTask, "dnsserver", 2048, NULL, 1, NULL))
+        print_out_tbl(TSK_START_DNSSERVER);
 }
 
 void loop()
@@ -530,6 +538,15 @@ void uartTask(void* pvParameters)
     for (;;)
     {
         uart_task();
+        vTaskDelay(1);
+    }
+}
+
+void consoleTask(void* pvParameters)
+{
+    for (;;)
+    {
+        term.readSerial();
         vTaskDelay(1);
     }
 }

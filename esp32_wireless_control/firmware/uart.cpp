@@ -32,6 +32,17 @@ void print_out(const char* format, ...)
     xQueueSend(uartq, tra_uart_buffer, portMAX_DELAY);
 }
 
+void print_out_nonl(const char* format, ...)
+{
+    va_list args;
+
+    va_start(args, format);
+    vsnprintf(tra_uart_buffer, MAX_UART_LINE_LEN, format, args);
+    va_end(args);
+
+    xQueueSend(uartq, tra_uart_buffer, portMAX_DELAY);
+}
+
 void print_out_tbl(uint8_t index)
 {
     char tra_uart_buffer[MAX_UART_LINE_LEN];
