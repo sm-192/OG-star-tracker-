@@ -54,6 +54,13 @@
 /**********************/
 
 /*****DO NOT MODIFY BELOW*****/
+// Set the resolution per step for the stepper motor
+#if STEPPER_TYPE == STEPPER_0_9
+#define ARCSEC_PER_STEP 2.0
+#else
+#define ARCSEC_PER_STEP 4.0
+#endif
+
 // LEDs for intervalometer status and general purpose status led
 #define INTERV_PIN 25
 #define STATUS_LED 26
