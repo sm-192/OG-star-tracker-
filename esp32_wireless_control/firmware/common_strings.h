@@ -16,6 +16,7 @@ static const char cmd_unknown_command[] = "Unknown command: ";
 static const char cmd_heap_minimum_ever_free[] = "Minimum Heap (Bytes): ";
 static const char cmd_heap_free[] = "Free heap (Bytes): ";
 static const char cmd_heap_available_args[] = "Available args: all\r\n";
+static const char cmd_goto_target_ra_args[] = "Usage: gotoRA <+14° 34' 21.4\"> <+54° 12' 42.3\">\r\n";
 
 static const char cmd_stack_highwater_uart[] = "Uart stack highwater: ";
 static const char cmd_stack_highwater_console[] = "Console stack highwater: ";
@@ -28,6 +29,7 @@ static const char cmd_help_help[] = "  help or ?                      Print this
 static const char cmd_help_stack[] = "  stack <0..N task>              Print available stack\r\n";
 static const char cmd_help_heap[] = "  heap <all>                     Print free heap\r\n";
 static const char cmd_help_reset[] = "  reset                          Reset the controller\r\n";
+static const char cmd_goto_target_ra[] = "  gotoRA <current> <target>      Goto target RA\r\n";
 
 // task related
 static const char tsk_not_avail[] = "task not available\r\n";
@@ -60,6 +62,7 @@ const char* const string_table[] = {
     cmd_heap_minimum_ever_free,
     cmd_heap_free,
     cmd_heap_available_args,
+    cmd_goto_target_ra_args,
 
     cmd_stack_highwater_uart,
     cmd_stack_highwater_console,
@@ -72,6 +75,7 @@ const char* const string_table[] = {
     cmd_help_stack,
     cmd_help_heap,
     cmd_help_reset,
+    cmd_goto_target_ra,
 
     // task related
     tsk_not_avail,
@@ -105,6 +109,7 @@ enum pgm_table_index_t
     CMD_HEAP_MINIMUM_EVER_FREE,
     CMD_HEAP_FREE,
     CMD_HEAP_AVAILABLE_ARGS,
+    CMD_GOTO_TARGET_RA_ARGS,
 
     CMD_STACK_HIGHWATER_UART,
     CMD_STACK_HIGHWATER_CONSOLE,
@@ -117,6 +122,7 @@ enum pgm_table_index_t
     CMD_HELP_STACK,
     CMD_HELP_HEAP,
     CMD_HELP_RESET,
+    CMD_GOTO_TARGET_RA,
 
     TSK_NOT_AVAIL,
     TSK_CLEAR_SCREEN,

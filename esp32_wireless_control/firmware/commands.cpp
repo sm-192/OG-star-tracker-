@@ -1,5 +1,6 @@
 #include <freertos/FreeRTOS.h>
 
+#include <axis.h>
 #include <commands.h>
 #include <uart.h>
 
@@ -24,6 +25,7 @@ static void cmdHelp()
     print_out_tbl(CMD_HELP_STACK);
     print_out_tbl(CMD_HELP_HEAP);
     print_out_tbl(CMD_HELP_RESET);
+    print_out_tbl(CMD_GOTO_TARGET_RA);
 }
 
 static uint16_t get_stack_high_water(const char* task_name)
@@ -125,6 +127,64 @@ static void cmdReset()
     resetFunc();
 }
 
+static Position parsePositionFromArgs(SerialTerminal* term)
+{
+    int degrees = 0, minutes = 0;
+    float seconds = 0.0f;
+
+    const char* degreesStr = term->getNext();
+    if (degreesStr)
+        degrees = atoi(degreesStr);
+    else
+    {
+        print_out("Error: Missing degrees for position.");
+        return Position();
+    }
+
+    const char* minutesStr = term->getNext();
+    if (minutesStr)
+        minutes = atoi(minutesStr);
+    else
+    {
+        print_out("Error: Missing minutes for position.");
+        return Position();
+    }
+
+    const char* secondsStr = term->getNext();
+    if (secondsStr)
+        seconds = atof(secondsStr);
+    else
+    {
+        print_out("Error: Missing seconds for position.");
+        return Position();
+    }
+
+    return Position(degrees, minutes, seconds);
+}
+
+static void cmdGotoTargetRA()
+{
+    Position currentRA = parsePositionFromArgs(_term);
+    if (currentRA.arcseconds == 0 && _term->getNext() == NULL)
+    {
+        print_out_tbl(CMD_GOTO_TARGET_RA_ARGS);
+        return;
+    }
+
+    Position targetRA = parsePositionFromArgs(_term);
+    if (targetRA.arcseconds == 0 && _term->getNext() == NULL)
+    {
+        print_out_tbl(CMD_GOTO_TARGET_RA_ARGS);
+        return;
+    }
+
+    print_out("GotoTargetRA called with:");
+    print_out("  Current Position: %lld arcseconds", currentRA.arcseconds);
+    print_out("  Target Position: %lld arcseconds", targetRA.arcseconds);
+
+    ra_axis.gotoTarget((ra_axis.trackingRate) / 50, currentRA, targetRA);
+}
+
 static void unknownCommand(const char* command)
 {
     // Print unknown command
@@ -154,4 +214,5 @@ void setup_terminal(SerialTerminal* term)
     _term->addCommand("stack", cmdStackAvailable);
     _term->addCommand("heap", cmdHeapAvailable);
     _term->addCommand("reset", cmdReset);
+    _term->addCommand("gotoRA", cmdGotoTargetRA);
 }
