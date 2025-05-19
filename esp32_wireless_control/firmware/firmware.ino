@@ -271,6 +271,38 @@ void handleSetCurrent()
     }
 }
 
+void handleGotoRA()
+{
+    Position currentPosition(0, 0, 0);
+    Position targetPosition(0, 0, 0);
+    int pan_speed = server.arg(SPEED).toInt();
+    currentPosition.arcseconds = server.arg("currentRA").toInt();
+    targetPosition.arcseconds = server.arg("targetRA").toInt();
+
+    pan_speed = pan_speed > MAX_CUSTOM_SLEW_RATE   ? MAX_CUSTOM_SLEW_RATE
+                : pan_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
+                                                   : pan_speed;
+
+    if (currentPosition.arcseconds == -1)
+    {
+        currentPosition.arcseconds = 0;
+        print_out("Invalid Current RA input. Defaulting to 0.");
+    }
+    if (targetPosition.arcseconds == -1)
+    {
+        targetPosition.arcseconds = 0;
+        print_out("Invalid Target RA input. Defaulting to 0.");
+    }
+
+    print_out("GotoRA called with:");
+    print_out("  Current RA: %lld arcseconds", currentPosition.arcseconds);
+    print_out("  Target RA: %lld arcseconds", targetPosition.arcseconds);
+    print_out("  rate: %lld", (int) ((2 * ra_axis.trackingRate) / pan_speed));
+
+    ra_axis.gotoTarget((2 * ra_axis.trackingRate) / pan_speed, currentPosition, targetPosition);
+    server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_GOTO_RA_PANNING_ON]);
+}
+
 void handleGetPresetExposureSettings()
 {
     int preset = server.arg(PRESET).toInt();
@@ -308,6 +340,15 @@ void handleAbortCapture()
     }
 }
 
+void handleAbortGoToRA()
+{
+    if (ra_axis.slewActive)
+    {
+        ra_axis.stopGotoTarget();
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_GOTO_RA_PANNING_OFF]);
+    }
+}
+
 void handleStatusRequest()
 {
     if (intervalometer.intervalometerActive)
@@ -339,9 +380,13 @@ void handleStatusRequest()
                 break;
         }
     }
-    else if (ra_axis.slewActive)
+    else if (ra_axis.slewActive && !ra_axis.goToTarget)
     {
         server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_SLEWING]);
+    }
+    else if (ra_axis.slewActive && ra_axis.goToTarget)
+    {
+        server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_GOTO_RA_PANNING_ON]);
     }
     else if (ra_axis.trackingActive)
     {
@@ -412,6 +457,8 @@ void setupWireless()
     server.on("/readPreset", HTTP_GET, handleGetPresetExposureSettings);
     server.on("/abort", HTTP_GET, handleAbortCapture);
     server.on("/status", HTTP_GET, handleStatusRequest);
+    server.on("/gotoRA", HTTP_GET, handleGotoRA);
+    server.on("/abort-goto-ra", HTTP_GET, handleAbortGoToRA);
     server.on("/version", HTTP_GET, handleVersion);
     server.on("/setlang", HTTP_GET, handleSetLanguage);
 
