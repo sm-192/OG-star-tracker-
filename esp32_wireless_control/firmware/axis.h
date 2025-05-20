@@ -6,7 +6,7 @@
 
 extern HardwareTimer slewTimeOut;
 
-#ifdef STEPPER_0_9
+#if STEPPER_TYPE == STEPPER_0_9
 enum trackingRateS
 {
     TRACKING_SIDEREAL = 2659383, // SIDEREAL (23h,56 min)
@@ -22,14 +22,35 @@ enum trackingRateS
 };
 #endif
 
+class Position
+{
+  public:
+    int64_t arcseconds;
+
+    Position(int degrees = 0, int minutes = 0, float seconds = 0.0f);
+    float toDegrees() const;
+    static int64_t toArcseconds(int degrees, int minutes, float seconds);
+};
+
 class Axis
 {
   public:
     Axis(uint8_t axisNumber, uint8_t dirPinforAxis, bool invertDirPin);
+
+    void setAxisTargetCount(int64_t count);
+    int64_t getAxisTargetCount();
+    void resetAxisCount();
+    void setAxisCount(int64_t count);
+    int64_t getAxisCount();
+
     void startTracking(trackingRateS rate, bool directionArg);
     void stopTracking();
     void startSlew(uint64_t rate, bool directionArg);
     void stopSlew();
+
+    void gotoTarget(uint64_t rate, const Position& current, const Position& target);
+    void stopGotoTarget();
+
     volatile int64_t axisCountValue;
     volatile int64_t targetCount;
     volatile bool goToTarget;
@@ -38,14 +59,13 @@ class Axis
     volatile bool axisAbsoluteDirection;
     bool trackingDirection;
     volatile bool counterActive;
-    void setAxisTargetCount(int64_t count);
-    void resetAxisCount();
 
     trackingRateS trackingRate;
 
   private:
     void setDirection(bool directionArg);
     static void setMicrostep(uint8_t microstep);
+
     HardwareTimer stepTimer;
     uint8_t stepPin;
     uint8_t dirPin;

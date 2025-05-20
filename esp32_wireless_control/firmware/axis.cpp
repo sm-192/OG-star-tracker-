@@ -1,4 +1,5 @@
 #include "axis.h"
+#include "uart.h"
 
 Axis ra_axis(1, AXIS1_DIR, RA_INVERT_DIR_PIN);
 Axis dec_axis(2, AXIS2_DIR, DEC_INVERT_DIR_PIN);
@@ -13,11 +14,14 @@ void IRAM_ATTR stepTimerRA_ISR()
     digitalWrite(AXIS1_STEP, ra_axis_step_phase); // toggle step pin at required frequency
     if (ra_axis.counterActive && ra_axis_step_phase)
     { // if counter active
-        int temp = ra_axis.axisCountValue;
+        int temp = ra_axis.getAxisCount();
         ra_axis.axisAbsoluteDirection ? temp++ : temp--;
-        ra_axis.axisCountValue = temp;
-        if (ra_axis.goToTarget && ra_axis.axisCountValue == ra_axis.targetCount)
+        ra_axis.setAxisCount(temp);
+        if (ra_axis.goToTarget && ra_axis.getAxisCount() == ra_axis.getAxisTargetCount())
         {
+            print_out("GotoTarget reached");
+            print_out("GotoTarget axisCountValue: %lld", ra_axis.getAxisCount());
+            print_out("GotoTarget targetCount: %lld", ra_axis.getAxisTargetCount());
             ra_axis.goToTarget = false;
             ra_axis.stopSlew();
         }
@@ -43,6 +47,22 @@ void IRAM_ATTR slewTimeOutTimer_ISR()
 }
 
 HardwareTimer slewTimeOut(2000, &slewTimeOutTimer_ISR);
+
+// Position class implementation
+Position::Position(int degrees, int minutes, float seconds)
+{
+    arcseconds = toArcseconds(degrees, minutes, seconds);
+}
+
+float Position::toDegrees() const
+{
+    return arcseconds / 3600.0f;
+}
+
+int64_t Position::toArcseconds(int degrees, int minutes, float seconds)
+{
+    return (degrees * 3600) + (minutes * 60) + static_cast<int>(seconds);
+}
 
 Axis::Axis(uint8_t axis, uint8_t dirPinforAxis, bool invertDirPin) : stepTimer(40000000)
 {
@@ -85,6 +105,36 @@ void Axis::stopTracking()
     stepTimer.stop();
 }
 
+void Axis::gotoTarget(uint64_t rate, const Position& current, const Position& target)
+{
+    int64_t deltaArcseconds = target.arcseconds - current.arcseconds;
+    int64_t stepsToMove = deltaArcseconds / ARCSEC_PER_STEP;
+    bool direction = stepsToMove > 0;
+
+    resetAxisCount();
+    setAxisTargetCount(stepsToMove);
+
+    if (targetCount != axisCountValue)
+    {
+        counterActive = true;
+        goToTarget = true;
+        stepTimer.stop();
+        axisAbsoluteDirection = direction;
+        setDirection(axisAbsoluteDirection);
+        slewActive = true;
+        setMicrostep(8);
+        stepTimer.start(rate, true);
+    }
+}
+
+void Axis::stopGotoTarget()
+{
+    goToTarget = false;
+    counterActive = false;
+    stepTimer.stop();
+    slewTimeOut.start(1, true);
+}
+
 void Axis::startSlew(uint64_t rate, bool directionArg)
 {
     stepTimer.stop();
@@ -112,9 +162,24 @@ void Axis::setAxisTargetCount(int64_t count)
     targetCount = count;
 }
 
+int64_t Axis::getAxisTargetCount()
+{
+    return targetCount;
+}
+
 void Axis::resetAxisCount()
 {
     axisCountValue = 0;
+}
+
+void Axis::setAxisCount(int64_t count)
+{
+    axisCountValue = count;
+}
+
+int64_t Axis::getAxisCount()
+{
+    return axisCountValue;
 }
 
 void Axis::setDirection(bool directionArg)
