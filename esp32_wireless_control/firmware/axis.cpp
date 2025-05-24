@@ -95,7 +95,7 @@ void Axis::startTracking(trackingRateS rate, bool directionArg)
     setDirection(axisAbsoluteDirection);
     trackingActive = true;
     stepTimer.stop();
-    setMicrostep(16);
+    setMicrostep(64);
     stepTimer.start(trackingRate, true);
 }
 

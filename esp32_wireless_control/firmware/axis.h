@@ -10,7 +10,7 @@ extern HardwareTimer slewTimeOut;
 enum trackingRateS
 {
     TRACKING_SIDEREAL = 2659383, // SIDEREAL (23h,56 min)
-    TRACKING_SOLAR = 2666666,    // SOLAR (24h)
+    TRACKING_SOLAR = 2666667,    // SOLAR (24h)
     TRACKING_LUNAR = 2723867,    // LUNAR (24h, 31 min)
 };
 #else // stepper 1.8 deg
