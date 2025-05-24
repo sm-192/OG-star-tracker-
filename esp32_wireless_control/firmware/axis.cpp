@@ -217,5 +217,8 @@ void Axis::setMicrostep(uint8_t microstep)
             digitalWrite(MS1, LOW);
             digitalWrite(MS2, HIGH);
             break;
+        default:
+            print_out("Invalid microstep value: %d", microstep);
+            break;
     }
 }
