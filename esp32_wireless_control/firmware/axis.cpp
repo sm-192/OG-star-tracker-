@@ -1,3 +1,5 @@
+#include "soc/gpio_struct.h"
+
 #include "axis.h"
 #include "uart.h"
 
@@ -11,7 +13,11 @@ void IRAM_ATTR stepTimerRA_ISR()
 {
     // ra ISR
     ra_axis_step_phase = !ra_axis_step_phase;
-    digitalWrite(AXIS1_STEP, ra_axis_step_phase); // toggle step pin at required frequency
+    if (ra_axis_step_phase)
+        GPIO.out_w1ts = (1 << AXIS1_STEP); // Set pin high
+    else
+        GPIO.out_w1tc = (1 << AXIS1_STEP); // Set pin low
+
     if (ra_axis.counterActive && ra_axis_step_phase)
     { // if counter active
         int temp = ra_axis.getAxisCount();
@@ -32,7 +38,11 @@ void IRAM_ATTR stepTimerDEC_ISR()
 {
     // dec ISR
     dec_axis_step_phase = !dec_axis_step_phase;
-    digitalWrite(AXIS2_STEP, dec_axis_step_phase); // toggle step pin at required frequency
+    if (dec_axis_step_phase)
+        GPIO.out_w1ts = (1 << AXIS2_STEP); // Set pin high
+    else
+        GPIO.out_w1tc = (1 << AXIS2_STEP); // Set pin low
+
     if (dec_axis_step_phase && dec_axis.counterActive)
     { // if counter active
         int temp = dec_axis.axisCountValue;
@@ -95,7 +105,7 @@ void Axis::startTracking(trackingRateS rate, bool directionArg)
     setDirection(axisAbsoluteDirection);
     trackingActive = true;
     stepTimer.stop();
-    setMicrostep(16);
+    setMicrostep(64);
     stepTimer.start(trackingRate, true);
 }
 
@@ -206,6 +216,9 @@ void Axis::setMicrostep(uint8_t microstep)
         case 64:
             digitalWrite(MS1, LOW);
             digitalWrite(MS2, HIGH);
+            break;
+        default:
+            print_out("Invalid microstep value: %d", microstep);
             break;
     }
 }
