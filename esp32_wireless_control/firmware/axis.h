@@ -63,11 +63,31 @@ class Axis
 
     trackingRateS trackingRate;
 
+    uint16_t getMicrostep()
+    {
+        return microStep;
+    }
+
+    volatile int64_t position;
+    void resetPosition()
+    {
+        setPosition(0);
+    }
+    void setPosition(int64_t pos)
+    {
+        position = pos;
+    }
+    int64_t getPosition()
+    {
+        return position;
+    }
+
   private:
     void setDirection(bool directionArg);
-    void setMicrostep(uint8_t microstep);
+    void setMicrostep(uint16_t microstep);
 
     HardwareTimer stepTimer;
+    uint16_t microStep;
     uint8_t stepPin;
     uint8_t dirPin;
     uint8_t axisNumber;
