@@ -414,7 +414,7 @@ void handleVersion()
 
 void setupWireless()
 {
-#ifdef AP
+#ifdef AP_MODE
     WiFi.mode(WIFI_MODE_AP);
     WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
     vTaskDelay(500);
@@ -472,9 +472,9 @@ void setupWireless()
     print_out("Starting mDNS responder");
     if (!MDNS.begin(MDNS_NAME))
     {
-		print_out("Error starting mDNS responder");
-		return;
-	}
+        print_out("Error starting mDNS responder");
+        return;
+    }
     print_out("mDNS responder started");
 
     MDNS.addService("http", "tcp", WEBSERVER_PORT);
@@ -483,7 +483,6 @@ void setupWireless()
 
     MDNS.addService("ogtracker", "tcp", WEBSERVER_PORT);
     MDNS.addServiceTxt("ogtracker", "tcp", "version", BUILD_VERSION);
-
 }
 
 void setup()
@@ -491,10 +490,10 @@ void setup()
     // Start the debug serial connection
     setup_uart(&Serial, 115200);
 
-
+    // start UART task before any usage of print_out
     if (xTaskCreate(uartTask, "uart", 4096, NULL, 1, NULL))
     {
-        // print_out_tbl(TSK_CLEAR_SCREEN);
+        print_out_tbl(TSK_CLEAR_SCREEN);
         print_out_tbl(TSK_START_UART);
     }
 
