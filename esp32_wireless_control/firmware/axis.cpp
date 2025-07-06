@@ -7,20 +7,16 @@
 #if MICROSTEPPING_MOTOR_DRIVER == USE_MSx_PINS_MICROSTEPPING
 #include "msx_motor_driver.h"
 MSxMotorDriver ra_driver(RA_MS1, RA_MS2);
-MSxMotorDriver dec_driver(DEC_MS1, DEC_MS2);
 #elif MICROSTEPPING_MOTOR_DRIVER == USE_TMC_DRIVER_MICROSTEPPING
 #include "tmc_motor_driver.h"
 TmcMotorDriver ra_driver(&AXIS_SERIAL_PORT, AXIS1_ADDR, TMC_R_SENSE, AXIS_RX, AXIS_TX);
-TmcMotorDriver dec_driver(&AXIS_SERIAL_PORT, AXIS2_ADDR, TMC_R_SENSE, AXIS_RX, AXIS_TX);
 #else
 #error Unknown Motor Driver
 #endif
 
 Axis ra_axis(1, &ra_driver, AXIS1_DIR, RA_INVERT_DIR_PIN);
-Axis dec_axis(2, &dec_driver, AXIS2_DIR, DEC_INVERT_DIR_PIN);
 
 volatile bool ra_axis_step_phase = 0;
-volatile bool dec_axis_step_phase = 0;
 
 void IRAM_ATTR stepTimerRA_ISR()
 {
@@ -76,35 +72,6 @@ void IRAM_ATTR stepTimerRA_ISR()
     }
 }
 
-void IRAM_ATTR stepTimerDEC_ISR()
-{
-    // dec ISR
-    dec_axis_step_phase = !dec_axis_step_phase;
-    if (dec_axis_step_phase)
-        GPIO.out_w1ts = (1 << AXIS2_STEP); // Set pin high
-    else
-        GPIO.out_w1tc = (1 << AXIS2_STEP); // Set pin low
-
-    if (dec_axis_step_phase && dec_axis.counterActive)
-    { // if counter active
-        int temp = dec_axis.getAxisCount();
-        int64_t position = dec_axis.getPosition();
-        uint8_t uStep = dec_axis.getMicrostep();
-        if (dec_axis.axisAbsoluteDirection)
-        {
-            temp++;
-            position += MAX_MICROSTEPS / (uStep ? uStep : 1);
-        }
-        else
-        {
-            temp--;
-            position -= MAX_MICROSTEPS / (uStep ? uStep : 1);
-        }
-        dec_axis.setAxisCount(temp);
-        dec_axis.setPosition(position);
-    }
-}
-
 void IRAM_ATTR slewTimeOutTimer_ISR()
 {
     ra_axis.stopSlew();
@@ -144,9 +111,6 @@ Axis::Axis(uint8_t axis, MotorDriver* motorDriver, uint8_t dirPinforAxis, bool i
     {
         case 1:
             stepTimer.attachInterupt(&stepTimerRA_ISR);
-            break;
-        case 2:
-            stepTimer.attachInterupt(&stepTimerDEC_ISR);
             break;
     }
 

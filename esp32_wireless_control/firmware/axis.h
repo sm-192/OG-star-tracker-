@@ -96,6 +96,5 @@ class Axis
 };
 
 extern Axis ra_axis;
-extern Axis dec_axis;
 
 #endif
