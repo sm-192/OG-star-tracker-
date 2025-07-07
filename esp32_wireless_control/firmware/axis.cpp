@@ -28,7 +28,6 @@ void IRAM_ATTR stepTimerRA_ISR()
         digitalWrite(AXIS1_STEP, HIGH);
 #else
         GPIO.out_w1ts = (1 << AXIS1_STEP); // Set pin high
-                                           //    	gpio_ll_set_level(&GPIO, AXIS1_STEP, 1);
 #endif
     }
     else
@@ -37,7 +36,6 @@ void IRAM_ATTR stepTimerRA_ISR()
         digitalWrite(AXIS1_STEP, LOW);
 #else
         GPIO.out_w1tc = (1 << AXIS1_STEP); // Set pin low
-                                           //    	gpio_ll_set_level(&GPIO, AXIS1_STEP, 0);
 #endif
     }
 
@@ -45,13 +43,13 @@ void IRAM_ATTR stepTimerRA_ISR()
     uint8_t uStep = ra_axis.getMicrostep();
     if (ra_axis_step_phase)
     {
-        if (ra_axis.axisAbsoluteDirection)
+        if (ra_axis.axisAbsoluteDirection ^ ra_axis.trackingDirection)
         {
-            position += MAX_MICROSTEPS / (uStep ? uStep : 1);
+            position -= MAX_MICROSTEPS / (uStep ? uStep : 1);
         }
         else
         {
-            position -= MAX_MICROSTEPS / (uStep ? uStep : 1);
+            position += MAX_MICROSTEPS / (uStep ? uStep : 1);
         }
         ra_axis.setPosition(position);
     }
@@ -59,7 +57,14 @@ void IRAM_ATTR stepTimerRA_ISR()
     if (ra_axis.counterActive && ra_axis_step_phase)
     { // if counter active
         int temp = ra_axis.getAxisCount();
-        ra_axis.axisAbsoluteDirection ? temp++ : temp--;
+        if (ra_axis.axisAbsoluteDirection ^ ra_axis.trackingDirection)
+        {
+            temp--;
+        }
+        else
+        {
+            temp++;
+        }
         ra_axis.setAxisCount(temp);
         if (ra_axis.goToTarget && ra_axis.getAxisCount() == ra_axis.getAxisTargetCount())
         {
@@ -122,7 +127,7 @@ void Axis::startTracking(uint64_t rate, bool directionArg)
     setDirection(directionArg);
     trackingActive = true;
     stepTimer.stop();
-    setMicrostep(64);
+    setMicrostep(TRACKER_MOTOR_MICROSTEPPING);
     stepTimer.start(trackingRate, true);
 }
 
@@ -134,15 +139,30 @@ void Axis::stopTracking()
 
 void Axis::gotoTarget(uint64_t rate, const Position& current, const Position& target)
 {
-    setMicrostep(8);
+    setMicrostep(TRACKER_MOTOR_MICROSTEPPING / 2);
     int64_t deltaArcseconds = target.arcseconds - current.arcseconds;
-    //    int64_t stepsToMove = deltaArcseconds / ARCSEC_PER_STEP;
-    // Value of 60 refers to resolution of second, if 256 microsteps used. 60 for 1.8deg stepper,
-    // 120 for 0.9
-    int64_t stepsToMove = (deltaArcseconds * 60) / (MAX_MICROSTEPS / (microStep ? microStep : 1));
-    bool direction = stepsToMove > 0;
 
-    setPosition(current.arcseconds * 4);
+    print_out_nonl("deltaArcseconds: %lld\n", deltaArcseconds);
+
+    if (abs(deltaArcseconds) > 86400 / 2)
+    {
+        if (deltaArcseconds > 0)
+        {
+            deltaArcseconds = (deltaArcseconds - 86400) % 86400;
+        }
+        else
+        {
+            deltaArcseconds = (deltaArcseconds + 86400) % 86400;
+        }
+    }
+
+    int64_t stepsToMove = (deltaArcseconds * STEPS_PER_SECOND_256MICROSTEP) /
+                          (MAX_MICROSTEPS / (microStep ? microStep : 1));
+    bool direction = (stepsToMove < 0) ^ trackingDirection;
+
+    print_out_nonl("stepsToMove: %lld\n", stepsToMove);
+
+    setPosition(current.arcseconds * STEPS_PER_SECOND_256MICROSTEP);
     resetAxisCount();
     setAxisTargetCount(stepsToMove);
 
@@ -170,7 +190,7 @@ void Axis::startSlew(uint64_t rate, bool directionArg)
     stepTimer.stop();
     setDirection(directionArg);
     slewActive = true;
-    setMicrostep(64);
+    setMicrostep(TRACKER_MOTOR_MICROSTEPPING / 2);
     slewTimeOut.start(12000, true);
     stepTimer.start(rate, true);
 }
