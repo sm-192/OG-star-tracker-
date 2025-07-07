@@ -115,7 +115,7 @@ Axis::Axis(uint8_t axis, MotorDriver* motorDriver, uint8_t dirPinforAxis, bool i
     }
 }
 
-void Axis::startTracking(trackingRateS rate, bool directionArg)
+void Axis::startTracking(uint64_t rate, bool directionArg)
 {
     trackingRate = rate;
     trackingDirection = directionArg;
