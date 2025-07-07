@@ -520,11 +520,6 @@ void setup()
     digitalWrite(EN12_n, LOW);
     // handleExposureSettings();
 
-    if (DEFAULT_ENABLE_TRACKING == 1)
-    {
-        ra_axis.startTracking(ra_axis.trackingRate, ra_axis.trackingDirection);
-    }
-
     // Initialize Wifi and web server
     setupWireless();
 
@@ -543,6 +538,12 @@ void setup()
 void loop()
 {
     int delay_ticks = 0;
+
+    if (DEFAULT_ENABLE_TRACKING == 1)
+    {
+        ra_axis.startTracking(ra_axis.trackingRate, ra_axis.trackingDirection);
+    }
+
     for (;;)
     {
         if (ra_axis.slewActive)
