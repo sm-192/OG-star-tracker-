@@ -119,8 +119,7 @@ void Axis::startTracking(uint64_t rate, bool directionArg)
 {
     trackingRate = rate;
     trackingDirection = directionArg;
-    axisAbsoluteDirection = directionArg;
-    setDirection(axisAbsoluteDirection);
+    setDirection(directionArg);
     trackingActive = true;
     stepTimer.stop();
     setMicrostep(64);
@@ -152,8 +151,7 @@ void Axis::gotoTarget(uint64_t rate, const Position& current, const Position& ta
         counterActive = true;
         goToTarget = true;
         stepTimer.stop();
-        axisAbsoluteDirection = direction;
-        setDirection(axisAbsoluteDirection);
+        setDirection(direction);
         slewActive = true;
         stepTimer.start(rate, true);
     }
@@ -170,8 +168,7 @@ void Axis::stopGotoTarget()
 void Axis::startSlew(uint64_t rate, bool directionArg)
 {
     stepTimer.stop();
-    axisAbsoluteDirection = directionArg;
-    setDirection(axisAbsoluteDirection);
+    setDirection(directionArg);
     slewActive = true;
     setMicrostep(64);
     slewTimeOut.start(12000, true);
@@ -216,6 +213,7 @@ int64_t Axis::getAxisCount()
 
 void Axis::setDirection(bool directionArg)
 {
+    axisAbsoluteDirection = directionArg;
     digitalWrite(dirPin, directionArg ^ invertDirectionPin);
 }
 
