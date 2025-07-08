@@ -103,7 +103,7 @@ void handleSlewRequest()
         slew_speed = slew_speed > MAX_CUSTOM_SLEW_RATE   ? MAX_CUSTOM_SLEW_RATE
                      : slew_speed < MIN_CUSTOM_SLEW_RATE ? MIN_CUSTOM_SLEW_RATE
                                                          : slew_speed;
-        ra_axis.startSlew((2 * ra_axis.trackingRate) / slew_speed, direction);
+        ra_axis.startSlew((2 * ra_axis.rate.tracking) / slew_speed, direction);
         server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_SLEWING]);
     }
 }
@@ -295,9 +295,9 @@ void handleGotoRA()
     print_out("GotoRA called with:");
     print_out("  Current RA: %lld arcseconds", currentPosition.arcseconds);
     print_out("  Target RA: %lld arcseconds", targetPosition.arcseconds);
-    print_out("  rate: %lld", (int) ((2 * ra_axis.trackingRate) / pan_speed));
+    print_out("  rate: %lld", (int) ((2 * ra_axis.rate.tracking) / pan_speed));
 
-    ra_axis.gotoTarget((2 * ra_axis.trackingRate) / pan_speed, currentPosition, targetPosition);
+    ra_axis.gotoTarget((2 * ra_axis.rate.tracking) / pan_speed, currentPosition, targetPosition);
     server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_GOTO_RA_PANNING_ON]);
 }
 
@@ -533,6 +533,8 @@ void setup()
         print_out_tbl(TSK_START_INTERVALOMETER);
     if (xTaskCreatePinnedToCore(webserverTask, "webserver", 4096, NULL, 1, NULL, 0))
         print_out_tbl(TSK_START_WEBSERVER);
+
+    ra_axis.begin();
 }
 
 void loop()
@@ -541,7 +543,7 @@ void loop()
 
     if (DEFAULT_ENABLE_TRACKING == 1)
     {
-        ra_axis.startTracking(ra_axis.trackingRate, ra_axis.trackingDirection);
+        ra_axis.startTracking(ra_axis.rate.tracking, ra_axis.direction.tracking);
     }
 
     for (;;)

@@ -182,7 +182,7 @@ static void cmdGotoTargetRA()
     print_out("  Current Position: %lld arcseconds", currentRA.arcseconds);
     print_out("  Target Position: %lld arcseconds", targetRA.arcseconds);
 
-    ra_axis.gotoTarget((ra_axis.trackingRate) / 50, currentRA, targetRA);
+    ra_axis.gotoTarget((ra_axis.rate.tracking) / 50, currentRA, targetRA);
 }
 
 static void unknownCommand(const char* command)

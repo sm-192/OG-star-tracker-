@@ -19,6 +19,21 @@ class Position
     static int64_t toArcseconds(int degrees, int minutes, float seconds);
 };
 
+class Direction
+{
+  public:
+    bool tracking;
+    bool requested;
+    volatile bool absolute;
+};
+
+class Rate
+{
+  public:
+    uint64_t tracking;
+    uint64_t requested;
+};
+
 class Axis
 {
   public:
@@ -43,11 +58,12 @@ class Axis
     volatile bool goToTarget;
     bool slewActive;
     bool trackingActive;
-    volatile bool axisAbsoluteDirection;
-    bool trackingDirection;
+
+    Direction direction;
+
     volatile bool counterActive;
 
-    uint64_t trackingRate;
+    Rate rate;
 
     uint16_t getMicrostep()
     {
@@ -68,6 +84,20 @@ class Axis
         return position;
     }
 
+    void requestTracking(uint64_t requestedRate, bool requestedDirection)
+    {
+        rate.requested = requestedRate;
+        direction.requested = requestedDirection;
+        startRequested = true;
+    }
+
+    bool trackingRequested()
+    {
+        return startRequested;
+    }
+
+    void begin();
+
   private:
     void setDirection(bool directionArg);
     void setMicrostep(uint16_t microstep);
@@ -79,6 +109,7 @@ class Axis
     uint8_t axisNumber;
     bool invertDirectionPin;
     MotorDriver* driver;
+    volatile bool startRequested;
 };
 
 extern Axis ra_axis;
