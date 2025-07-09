@@ -296,10 +296,12 @@ const char html_content[] = R"=====(
                 if (lastClick >= (Date.now() - delay))
                     return;
                 lastClick = Date.now();
+                var hemisphereDirection = +document.getElementById('hemisphere-select').value;
+
                 if (directionArg == 'left') {
-                    direction = 0;
+                    direction = (hemisphereDirection) ? 0 : 1;
                 } else if (directionArg == 'right') {
-                    direction = 1;
+                    direction = hemisphereDirection;
                 }
                 var index = document.getElementById('slew-select').selectedIndex;
                 if (index == 6) {
