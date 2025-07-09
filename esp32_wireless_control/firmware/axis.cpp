@@ -28,7 +28,6 @@ void IRAM_ATTR stepTimerRA_ISR()
         digitalWrite(AXIS1_STEP, HIGH);
 #else
         GPIO.out_w1ts = (1 << AXIS1_STEP); // Set pin high
-                                           //    	gpio_ll_set_level(&GPIO, AXIS1_STEP, 1);
 #endif
     }
     else
@@ -37,7 +36,6 @@ void IRAM_ATTR stepTimerRA_ISR()
         digitalWrite(AXIS1_STEP, LOW);
 #else
         GPIO.out_w1tc = (1 << AXIS1_STEP); // Set pin low
-                                           //    	gpio_ll_set_level(&GPIO, AXIS1_STEP, 0);
 #endif
     }
 
@@ -45,13 +43,13 @@ void IRAM_ATTR stepTimerRA_ISR()
     uint8_t uStep = ra_axis.getMicrostep();
     if (ra_axis_step_phase)
     {
-        if (ra_axis.axisAbsoluteDirection)
+        if (ra_axis.direction.absolute ^ ra_axis.direction.tracking)
         {
-            position += MAX_MICROSTEPS / (uStep ? uStep : 1);
+            position -= MAX_MICROSTEPS / (uStep ? uStep : 1);
         }
         else
         {
-            position -= MAX_MICROSTEPS / (uStep ? uStep : 1);
+            position += MAX_MICROSTEPS / (uStep ? uStep : 1);
         }
         ra_axis.setPosition(position);
     }
@@ -59,7 +57,14 @@ void IRAM_ATTR stepTimerRA_ISR()
     if (ra_axis.counterActive && ra_axis_step_phase)
     { // if counter active
         int temp = ra_axis.getAxisCount();
-        ra_axis.axisAbsoluteDirection ? temp++ : temp--;
+        if (ra_axis.direction.absolute ^ ra_axis.direction.tracking)
+        {
+            temp--;
+        }
+        else
+        {
+            temp++;
+        }
         ra_axis.setAxisCount(temp);
         if (ra_axis.goToTarget && ra_axis.getAxisCount() == ra_axis.getAxisTargetCount())
         {
@@ -95,15 +100,28 @@ int64_t Position::toArcseconds(int degrees, int minutes, float seconds)
     return (degrees * 3600) + (minutes * 60) + static_cast<int>(seconds);
 }
 
+void axisTask(void* parameter)
+{
+    Axis* axis = (Axis*) parameter;
+    for (;;)
+    {
+        if (axis->trackingRequested())
+        {
+            axis->startTracking(axis->rate.requested, axis->direction.requested);
+        }
+        vTaskDelay(1);
+    }
+}
+
 Axis::Axis(uint8_t axis, MotorDriver* motorDriver, uint8_t dirPinforAxis, bool invertDirPin)
-    : stepTimer(40000000)
+    : stepTimer(40000000), startRequested(false)
 {
     driver = motorDriver;
     axisNumber = axis;
-    trackingDirection = c_DIRECTION;
+    direction.tracking = c_DIRECTION;
     dirPin = dirPinforAxis;
     invertDirectionPin = invertDirPin;
-    trackingRate = TRACKING_RATE;
+    rate.tracking = TRACKING_RATE;
 
     pinMode(dirPin, OUTPUT);
 
@@ -113,23 +131,24 @@ Axis::Axis(uint8_t axis, MotorDriver* motorDriver, uint8_t dirPinforAxis, bool i
             stepTimer.attachInterupt(&stepTimerRA_ISR);
             break;
     }
-
-    if (DEFAULT_ENABLE_TRACKING == 1 && axisNumber == 1)
-    {
-        startTracking(trackingRate, trackingDirection);
-    }
 }
 
-void Axis::startTracking(trackingRateS rate, bool directionArg)
+void Axis::begin()
 {
-    trackingRate = rate;
-    trackingDirection = directionArg;
-    axisAbsoluteDirection = directionArg;
-    setDirection(axisAbsoluteDirection);
+    if (xTaskCreate(axisTask, "axis_task", 4096, this, 1, NULL))
+        print_out_nonl("Started axis task\n");
+}
+
+void Axis::startTracking(uint64_t rateArg, bool directionArg)
+{
+    startRequested = false;
+    rate.tracking = rateArg;
+    direction.tracking = directionArg;
+    setDirection(directionArg);
     trackingActive = true;
     stepTimer.stop();
-    setMicrostep(64);
-    stepTimer.start(trackingRate, true);
+    setMicrostep(TRACKER_MOTOR_MICROSTEPPING);
+    stepTimer.start(rate.tracking, true);
 }
 
 void Axis::stopTracking()
@@ -138,17 +157,32 @@ void Axis::stopTracking()
     stepTimer.stop();
 }
 
-void Axis::gotoTarget(uint64_t rate, const Position& current, const Position& target)
+void Axis::gotoTarget(uint64_t rateArg, const Position& current, const Position& target)
 {
-    setMicrostep(8);
+    setMicrostep(TRACKER_MOTOR_MICROSTEPPING / 2);
     int64_t deltaArcseconds = target.arcseconds - current.arcseconds;
-    //    int64_t stepsToMove = deltaArcseconds / ARCSEC_PER_STEP;
-    // Value of 60 refers to resolution of second, if 256 microsteps used. 60 for 1.8deg stepper,
-    // 120 for 0.9
-    int64_t stepsToMove = (deltaArcseconds * 60) / (MAX_MICROSTEPS / (microStep ? microStep : 1));
-    bool direction = stepsToMove > 0;
 
-    setPosition(current.arcseconds * 4);
+    print_out_nonl("deltaArcseconds: %lld\n", deltaArcseconds);
+
+    if (abs(deltaArcseconds) > 86400 / 2)
+    {
+        if (deltaArcseconds > 0)
+        {
+            deltaArcseconds = (deltaArcseconds - 86400) % 86400;
+        }
+        else
+        {
+            deltaArcseconds = (deltaArcseconds + 86400) % 86400;
+        }
+    }
+
+    int64_t stepsToMove = (deltaArcseconds * STEPS_PER_SECOND_256MICROSTEP) /
+                          (MAX_MICROSTEPS / (microStep ? microStep : 1));
+    bool directionTmp = (stepsToMove < 0) ^ direction.tracking;
+
+    print_out_nonl("stepsToMove: %lld\n", stepsToMove);
+
+    setPosition(current.arcseconds * STEPS_PER_SECOND_256MICROSTEP);
     resetAxisCount();
     setAxisTargetCount(stepsToMove);
 
@@ -157,10 +191,9 @@ void Axis::gotoTarget(uint64_t rate, const Position& current, const Position& ta
         counterActive = true;
         goToTarget = true;
         stepTimer.stop();
-        axisAbsoluteDirection = direction;
-        setDirection(axisAbsoluteDirection);
+        setDirection(directionTmp);
         slewActive = true;
-        stepTimer.start(rate, true);
+        stepTimer.start(rateArg, true);
     }
 }
 
@@ -175,10 +208,9 @@ void Axis::stopGotoTarget()
 void Axis::startSlew(uint64_t rate, bool directionArg)
 {
     stepTimer.stop();
-    axisAbsoluteDirection = directionArg;
-    setDirection(axisAbsoluteDirection);
+    setDirection(directionArg);
     slewActive = true;
-    setMicrostep(64);
+    setMicrostep(TRACKER_MOTOR_MICROSTEPPING / 2);
     slewTimeOut.start(12000, true);
     stepTimer.start(rate, true);
 }
@@ -190,7 +222,7 @@ void Axis::stopSlew()
     slewTimeOut.stop();
     if (trackingActive)
     {
-        startTracking(trackingRate, trackingDirection);
+        requestTracking(rate.tracking, direction.tracking);
     }
 }
 
@@ -221,11 +253,15 @@ int64_t Axis::getAxisCount()
 
 void Axis::setDirection(bool directionArg)
 {
+    direction.absolute = directionArg;
     digitalWrite(dirPin, directionArg ^ invertDirectionPin);
 }
 
 void Axis::setMicrostep(uint16_t microstep)
 {
-    microStep = microstep;
-    driver->setMicrosteps(microstep);
+    if (microStep != microstep)
+    {
+        microStep = microstep;
+        driver->setMicrosteps(microstep);
+    }
 }

@@ -156,7 +156,7 @@ void Intervalometer::run()
                     {
                         ra_axis.goToTarget = true;
                         ra_axis.counterActive = true;
-                        ra_axis.startSlew(ra_axis.trackingRate / 3,
+                        ra_axis.startSlew(ra_axis.rate.tracking / 3,
                                           randomDirection); // dither at 6 x tracking rate.
                     }
                 }
@@ -191,7 +191,7 @@ void Intervalometer::run()
                 {
                     ra_axis.counterActive = true;
                     ra_axis.goToTarget = true;
-                    ra_axis.startSlew(ra_axis.trackingRate / 10,
+                    ra_axis.startSlew(ra_axis.rate.tracking / 10,
                                       currentSettings.panDirection); // pan at 20x tracking rate
                 }
             }
@@ -241,8 +241,8 @@ void Intervalometer::run()
                 if (ra_axis.targetCount != ra_axis.axisCountValue)
                 {
                     ra_axis.goToTarget = true;
-                    ra_axis.startSlew(ra_axis.trackingRate / 10,
-                                      !ra_axis.trackingDirection); // rewind at 20 x tracking rate.
+                    ra_axis.startSlew(ra_axis.rate.tracking / 10,
+                                      !ra_axis.direction.tracking); // rewind at 20 x tracking rate.
                 }
             }
             if (!ra_axis.slewActive)

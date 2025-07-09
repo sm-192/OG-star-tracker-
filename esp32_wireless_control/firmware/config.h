@@ -1,5 +1,5 @@
 #ifndef CONFIG
-#define CONFIG
+#define CONFIG 1
 
 #ifdef HAVE_WIFI_CONFIG
 #include "wifi_config.h"
@@ -10,12 +10,16 @@
 #define STEPPER_0_9 0 // 0.9 degree stepper motor
 #define STEPPER_1_8 1 // 1.8 degree stepper motor
 
+#define TRACKING_RATE_BOARD_V2 1
+
+#define MOTOR_TRACKING_RATE TRACKING_RATE_BOARD_V2
+
 /*To build in Arduino IDE, install esp32 boards V3.0x and the Arduinojson library by Benoit
  * Blanchon*/
 /*****USER DEFINED*****/
 // AP mode by default: ESP32 will create a wifi network which you can connect to
 #define c_DIRECTION 1                // 1 is for north hemisphere and 0 for south hemisphere
-#define RA_INVERT_DIR_PIN 0          // if need to invert direction pin set to 1
+#define RA_INVERT_DIR_PIN 1          // if need to invert direction pin set to 1
 #define DEC_INVERT_DIR_PIN 0         // if need to invert direction pin set to 1
 #define DEFAULT_ENABLE_TRACKING 1    // set to 1 to enable tracking at startup
 #define DITHER_DISTANCE_X10_PIXELS 5 // set max distance to dither in multiple of 10 pixels

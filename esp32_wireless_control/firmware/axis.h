@@ -5,23 +5,9 @@
 #include "hardwaretimer.h"
 #include "motor_driver.h"
 
-extern HardwareTimer slewTimeOut;
+#include "tracking_rates.h"
 
-#if STEPPER_TYPE == STEPPER_0_9
-enum trackingRateS
-{
-    TRACKING_SIDEREAL = 2659383, // SIDEREAL (23h,56 min)
-    TRACKING_SOLAR = 2666667,    // SOLAR (24h)
-    TRACKING_LUNAR = 2723867,    // LUNAR (24h, 31 min)
-};
-#else // stepper 1.8 deg
-enum trackingRateS
-{
-    TRACKING_SIDEREAL = 5318765, // SIDEREAL (23h,56 min)
-    TRACKING_SOLAR = 5333333,    // SOLAR (24h)
-    TRACKING_LUNAR = 5447735,    // LUNAR (24h, 31 min)
-};
-#endif
+extern HardwareTimer slewTimeOut;
 
 class Position
 {
@@ -31,6 +17,21 @@ class Position
     Position(int degrees = 0, int minutes = 0, float seconds = 0.0f);
     float toDegrees() const;
     static int64_t toArcseconds(int degrees, int minutes, float seconds);
+};
+
+class Direction
+{
+  public:
+    bool tracking;
+    bool requested;
+    volatile bool absolute;
+};
+
+class Rate
+{
+  public:
+    uint64_t tracking;
+    uint64_t requested;
 };
 
 class Axis
@@ -44,7 +45,7 @@ class Axis
     void setAxisCount(int64_t count);
     int64_t getAxisCount();
 
-    void startTracking(trackingRateS rate, bool directionArg);
+    void startTracking(uint64_t rate, bool directionArg);
     void stopTracking();
     void startSlew(uint64_t rate, bool directionArg);
     void stopSlew();
@@ -57,11 +58,12 @@ class Axis
     volatile bool goToTarget;
     bool slewActive;
     bool trackingActive;
-    volatile bool axisAbsoluteDirection;
-    bool trackingDirection;
+
+    Direction direction;
+
     volatile bool counterActive;
 
-    trackingRateS trackingRate;
+    Rate rate;
 
     uint16_t getMicrostep()
     {
@@ -82,6 +84,20 @@ class Axis
         return position;
     }
 
+    void requestTracking(uint64_t requestedRate, bool requestedDirection)
+    {
+        rate.requested = requestedRate;
+        direction.requested = requestedDirection;
+        startRequested = true;
+    }
+
+    bool trackingRequested()
+    {
+        return startRequested;
+    }
+
+    void begin();
+
   private:
     void setDirection(bool directionArg);
     void setMicrostep(uint16_t microstep);
@@ -93,6 +109,7 @@ class Axis
     uint8_t axisNumber;
     bool invertDirectionPin;
     MotorDriver* driver;
+    volatile bool startRequested;
 };
 
 extern Axis ra_axis;
