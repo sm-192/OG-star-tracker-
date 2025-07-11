@@ -12,7 +12,6 @@
 #include "common_strings.h"
 #include "config.h"
 #include "hardwaretimer.h"
-#include "index_html.h"
 #include "intervalometer.h"
 #include "uart.h"
 #include "web_languages.h"
@@ -27,10 +26,14 @@ void consoleTask(void* pvParameters);
 void webserverTask(void* pvParameters);
 void intervalometerTask(void* pvParameters);
 
+extern const uint8_t interface_index_html_start[] asm("_binary_interface_index_html_start");
+extern const uint8_t interface_index_html_end[] asm("_binary_interface_index_html_end");
+
 // Handle requests to the root URL ("/")
 void handleRoot()
 {
-    String htmlString = html_content;
+    String htmlString =
+        String(interface_index_html_start, interface_index_html_end - interface_index_html_start);
     for (int placeholder = 0; placeholder < numberOfHTMLStrings; placeholder++)
     {
         htmlString.replace(HTMLplaceHolders[placeholder],
@@ -322,7 +325,7 @@ void handleGetPresetExposureSettings()
     settings[FOCAL_LENGTH] = intervalometer.currentSettings.focalLength;
     serializeJson(settings, json);
     // print_out(json);
-    server.send(200, "application/json", json);
+    server.send(200, MIME_APPLICATION_JSON, json);
 }
 
 void handleAbortCapture()
