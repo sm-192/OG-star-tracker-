@@ -331,13 +331,15 @@
                 if (lastClick >= (Date.now() - delay))
                     return;
                 lastClick = Date.now();
-                if (directionArg == 'left') {
-                    direction = 0;
-                } else if (directionArg == 'right') {
-                    direction = 1;
+                var hemisphereDirection = +document.getElementById('hemisphere-select').value;
+
+                if (directionArg === 'left') {
+                    direction = (hemisphereDirection) ? 0 : 1;
+                } else if (directionArg === 'right') {
+                    direction = hemisphereDirection;
                 }
-                var value = document.getElementById('slew-select').value;
-                if (value == 'custom') {
+                var index = document.getElementById('slew-select').selectedIndex;
+                if (index === 6) {
                     var speed = document.getElementById('custom-speed').value;
                 } else {
                     var speed = document.getElementById('slew-select').value;
