@@ -3,8 +3,8 @@
 #include "consts.h"
 
 // Calculate tracking rate from period in milliseconds
-// Formula: Timer_reload_value = TIMER_APB_CLK_FREQ / steps_per_second
-// Where steps_per_second = (steps_for_full_revolution_at_64_microstepping) / day_period_in_seconds
+// Formula: Timer_reload_value = TIMER_APB_CLK_FREQ / timer_interrupts_per_second
+// Where timer_interrupts_per_second = steps_per_second * 2 (ISR toggles HIGH/LOW)
 uint64_t TrackingRates::calculateTrackingRate(uint64_t period_ms)
 {
     // Convert STEPS_PER_TRACKER_FULL_REV_INT from 256 microstepping to 64 microstepping
@@ -17,8 +17,11 @@ uint64_t TrackingRates::calculateTrackingRate(uint64_t period_ms)
     double steps_per_second =
         (double) steps_per_revolution_microstep / ((double) period_ms / 1000.0);
 
-    // Timer reload value = timer_frequency / steps_per_second
-    uint64_t timer_reload_value = (uint64_t) (TIMER_APB_CLK_FREQ / steps_per_second);
+    // ISR creates HIGH/LOW cycle, so we need 2x timer interrupts per stepper step
+    double timer_interrupts_per_second = steps_per_second * 2.0;
+
+    // Timer reload value = timer_frequency / timer_interrupts_per_second
+    uint64_t timer_reload_value = (uint64_t) (TIMER_APB_CLK_FREQ / timer_interrupts_per_second);
 
     return timer_reload_value;
 }
