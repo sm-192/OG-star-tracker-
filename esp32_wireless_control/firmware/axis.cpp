@@ -135,7 +135,7 @@ Axis::Axis(uint8_t axis, MotorDriver* motorDriver, uint8_t dirPinforAxis, bool i
 
 void Axis::begin()
 {
-    if (xTaskCreate(axisTask, "axis_task", 4096, this, 1, NULL))
+    if (xTaskCreatePinnedToCore(axisTask, "axis_task", 4096, this, 1, NULL, 1))
         print_out_nonl("Started axis task\n");
 }
 
