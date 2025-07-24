@@ -2,31 +2,43 @@
 #define _TRACKING_RATES_H_ 1
 
 #include "config.h"
+#include <stdint.h>
 
 #if MOTOR_TRACKING_RATE == TRACKING_RATE_BOARD_V2
-#if STEPPER_TYPE == STEPPER_0_9
-// gear ratio 101.25, 0.9deg motor, 64 msteps, f_cpu@240MHz, f_isr@40MHz
-#define TRACKER_MOTOR_MICROSTEPPING 64
-#define STEPS_PER_SECOND_256MICROSTEP 120
 
-enum trackingRateS
+// Tracking rate enum constants (backward compatible)
+enum TrackingRateType
 {
-    TRACKING_SIDEREAL = 664846, // SIDEREAL (23h,56 min)
-    TRACKING_SOLAR = 666667,    // SOLAR (24h)
-    TRACKING_LUNAR = 680967,    // LUNAR (24h, 31 min)
+    TRACKING_SIDEREAL = 0,
+    TRACKING_SOLAR = 1,
+    TRACKING_LUNAR = 2
 };
-#else // stepper 1.8 deg
-// gear ratio 101.25, 1.8deg motor, 64 msteps, f_cpu@240MHz, f_isr@40MHz
-#define TRACKER_MOTOR_MICROSTEPPING 64
-#define STEPS_PER_SECOND_256MICROSTEP 60
 
-enum trackingRateS
+// Tracking rates class with calculated timer reload values
+class TrackingRates
 {
-    TRACKING_SIDEREAL = 1329691, // SIDEREAL (23h,56 min)
-    TRACKING_SOLAR = 1333333,    // SOLAR (24h)
-    TRACKING_LUNAR = 1361934,    // LUNAR (24h, 31 min)
+  private:
+    uint64_t current_rate;
+    uint64_t sidereal_rate;
+    uint64_t solar_rate;
+    uint64_t lunar_rate;
+
+    // Calculate tracking rate from period in milliseconds
+    uint64_t calculateTrackingRate(uint64_t period_ms);
+
+  public:
+    TrackingRates(); // Constructor calculates all rates
+
+    uint64_t getRate()
+    {
+        return current_rate;
+    };
+    void setRate(TrackingRateType type);
 };
-#endif
+
+// Global instance for easy access
+extern TrackingRates trackingRates;
+
 #else
 #error Unknown tracking rate setting
 #endif
