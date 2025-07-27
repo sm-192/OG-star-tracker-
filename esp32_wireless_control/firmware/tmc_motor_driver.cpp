@@ -18,3 +18,9 @@ void TmcMotorDriver::setMicrosteps(uint16_t microsteps)
 {
     tmc_driver.microsteps(microsteps);
 }
+
+void TmcMotorDriver::setDirection(bool direction)
+{
+    tmc_driver.shaft(direction);
+    tmc_driver.push();
+}

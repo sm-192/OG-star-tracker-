@@ -3,10 +3,12 @@
 #include "msx_motor_driver.h"
 #include "uart.h"
 
-MSxMotorDriver::MSxMotorDriver(uint8_t ms1Pin, uint8_t ms2Pin) : _ms1Pin(ms1Pin), _ms2Pin(ms2Pin)
+MSxMotorDriver::MSxMotorDriver(uint8_t ms1Pin, uint8_t ms2Pin, uint8_t dirPin)
+    : _ms1Pin(ms1Pin), _ms2Pin(ms2Pin), _dirPin(dirPin)
 {
     pinMode(_ms1Pin, OUTPUT);
     pinMode(_ms2Pin, OUTPUT);
+    pinMode(_dirPin, OUTPUT);
 }
 
 void MSxMotorDriver::setMicrosteps(uint16_t microsteps)
@@ -33,4 +35,9 @@ void MSxMotorDriver::setMicrosteps(uint16_t microsteps)
             print_out("Invalid microstep value: %d", microsteps);
             break;
     }
+}
+
+void MSxMotorDriver::setDirection(bool direction)
+{
+    digitalWrite(_dirPin, direction);
 }

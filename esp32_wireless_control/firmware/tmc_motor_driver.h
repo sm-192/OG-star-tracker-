@@ -12,6 +12,7 @@ class TmcMotorDriver : public MotorDriver
                    uint8_t txPin);
     ~TmcMotorDriver(){};
     void setMicrosteps(uint16_t microsteps);
+    void setDirection(bool direction);
 
   private:
     HardwareSerial* serialPort;
