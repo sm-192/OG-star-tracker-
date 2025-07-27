@@ -61,8 +61,8 @@
 
 #define TMC_R_SENSE 0.11f // Match to your driver
 #define AXIS_SERIAL_PORT Serial2
-#define AXIS_RX X_STOP
-#define AXIS_TX Z_DIR
+#define AXIS_RX 16
+#define AXIS_TX 19
 
 #define AXIS1_ADDR 0
 #define AXIS2_ADDR 1
@@ -72,7 +72,7 @@
 #define USE_MSx_PINS_MICROSTEPPING 1
 #define USE_TMC_DRIVER_MICROSTEPPING 2
 
-#define MICROSTEPPING_MOTOR_DRIVER USE_MSx_PINS_MICROSTEPPING
+#define MICROSTEPPING_MOTOR_DRIVER USE_TMC_DRIVER_MICROSTEPPING
 
 /*****DO NOT MODIFY BELOW*****/
 // Set the resolution per step for the stepper motor
