@@ -265,3 +265,8 @@ void Axis::setMicrostep(uint16_t microstep)
         driver->setMicrosteps(microstep);
     }
 }
+
+void Axis::print_status()
+{
+    driver->print_status();
+}

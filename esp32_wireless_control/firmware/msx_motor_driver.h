@@ -12,6 +12,7 @@ class MSxMotorDriver : public MotorDriver
     }
     void setMicrosteps(uint16_t microsteps);
     void setDirection(bool direction);
+    void print_status();
 
   private:
     uint8_t _ms1Pin;
