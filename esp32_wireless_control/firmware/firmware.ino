@@ -568,6 +568,7 @@ void loop()
             digitalWrite(STATUS_LED, ra_axis.trackingActive ? HIGH : LOW);
             delay_ticks = 1000; // Delay for 1 second
         }
+        ra_axis.print_status();
         vTaskDelay(delay_ticks);
     }
 }
