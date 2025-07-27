@@ -40,7 +40,7 @@ void IRAM_ATTR stepTimerRA_ISR()
     }
 
     int64_t position = ra_axis.getPosition();
-    uint8_t uStep = ra_axis.getMicrostep();
+    uint16_t uStep = ra_axis.getMicrostep();
     if (ra_axis_step_phase)
     {
         if (ra_axis.direction.absolute ^ ra_axis.direction.tracking)
