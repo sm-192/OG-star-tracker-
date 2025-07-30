@@ -44,6 +44,7 @@ void MSxMotorDriver::setDirection(bool direction)
 
 void MSxMotorDriver::print_status()
 {
+#if DEBUG == 1
     print_out("MSx Motor Driver Status:");
     print_out("  Type: External microstepping control");
     print_out("  MS1 Pin: %d", _ms1Pin);
@@ -51,4 +52,5 @@ void MSxMotorDriver::print_status()
     print_out("  DIR Pin: %d", _dirPin);
     print_out("  Direction: Controlled via external DIR pin");
     print_out("  Communication: GPIO-based (no UART)");
+#endif
 }

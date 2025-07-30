@@ -42,10 +42,12 @@ void TmcMotorDriver::setMicrosteps(uint16_t microsteps)
     uint16_t actual_microsteps = tmc_driver.microsteps();
     uint16_t actual_rms_current = tmc_driver.rms_current();
 
+#if DEBUG == 1
     print_out("Microsteps set:");
     print_out("  Requested: %d, Actual: %d", microsteps, actual_microsteps);
     print_out("  RMS Current: %d mA", actual_rms_current);
     print_out("  Hold Current: %d mA", (uint16_t) (actual_rms_current * 0.8));
+#endif
 
     if (microsteps != actual_microsteps)
     {
@@ -61,6 +63,7 @@ void TmcMotorDriver::setDirection(bool direction)
 
 void TmcMotorDriver::print_status()
 {
+#if DEBUG == 1
     uint8_t ihold_raw = tmc_driver.ihold();
     uint16_t rms_current = tmc_driver.rms_current();
 
@@ -126,4 +129,5 @@ void TmcMotorDriver::print_status()
     {
         print_out("TMC Driver: All GSTAT error flags clear");
     }
+#endif
 }

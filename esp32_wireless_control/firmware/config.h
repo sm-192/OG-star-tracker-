@@ -52,6 +52,10 @@
 #ifndef WEBSERVER_PORT
 #define WEBSERVER_PORT 80
 #endif
+// Enable debug printouts
+#ifndef DEBUG
+#define DEBUG 0
+#endif
 
 // try to update every time there is breaking change
 #ifndef INTERNAL_VERSION

@@ -276,13 +276,17 @@ void Intervalometer::readSettingsFromPreset(uint8_t preset)
 
 void Intervalometer::savePresetsToEEPPROM()
 {
+#if DEBUG == 1
     print_out("writtenBytes: ");
+#endif
     print_out("%d", writeObjectToEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
 }
 
 void Intervalometer::readPresetsFromEEPROM()
 {
+#if DEBUG == 1
     print_out("readBytes: ");
+#endif
     print_out("%d", readObjectFromEEPROM(PRESETS_EEPROM_START_LOCATION, presets));
 }
 
@@ -314,10 +318,9 @@ template <class T> int Intervalometer::writeObjectToEEPROM(int address, const T&
     unsigned int i;
     for (i = 0; i < sizeof(object); i++)
     {
-        // print_out("Address = ");
-        // print_out(address);
-        // print_out(", Data = ");
-        // print_out(*p);
+#if DEBUG == 1
+        print_out("Address = %d, Data = 0x%02X", address, *p);
+#endif
         EEPROM.write(address++, *p++);
         EEPROM.commit();
     }
@@ -331,10 +334,9 @@ template <class T> int Intervalometer::readObjectFromEEPROM(int address, T& obje
     unsigned int i;
     for (i = 0; i < sizeof(object); i++)
     {
-        // print_out("Address = ");
-        // print_out(address);
-        // print_out(", Data = ");
-        // print_out(EEPROM.read(address), HEX);
+#if DEBUG == 1
+        print_out("Address = %d, Data = 0x%02X", address, EEPROM.read(address));
+#endif
         *p++ = EEPROM.read(address++);
     }
     return i;
