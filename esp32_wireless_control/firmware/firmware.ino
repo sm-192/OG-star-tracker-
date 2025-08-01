@@ -64,24 +64,23 @@ void handleRoot()
 void handleOn()
 {
     int tracking_speed = server.arg(TRACKING_SPEED).toInt();
-    trackingRateS rate;
     switch (tracking_speed)
     {
         case 0: // sidereal rate
-            rate = TRACKING_SIDEREAL;
+            trackingRates.setRate(TrackingRateType::TRACKING_SIDEREAL);
             break;
         case 1: // solar rate
-            rate = TRACKING_SOLAR;
+            trackingRates.setRate(TrackingRateType::TRACKING_SOLAR);
             break;
         case 2: // lunar rate
-            rate = TRACKING_LUNAR;
+            trackingRates.setRate(TrackingRateType::TRACKING_LUNAR);
             break;
         default:
-            rate = TRACKING_SIDEREAL;
+            trackingRates.setRate(TrackingRateType::TRACKING_SIDEREAL);
             break;
     }
     int direction = server.arg(DIRECTION).toInt();
-    ra_axis.startTracking(rate, direction);
+    ra_axis.startTracking(trackingRates.getRate(), direction);
 
     if (intervalometer.currentErrorMessage == ErrorMessage::ERR_MSG_NONE)
         server.send(200, MIME_TYPE_TEXT, languageMessageStrings[language][MSG_TRACKING_ON]);

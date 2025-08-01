@@ -114,14 +114,14 @@ void axisTask(void* parameter)
 }
 
 Axis::Axis(uint8_t axis, MotorDriver* motorDriver, uint8_t dirPinforAxis, bool invertDirPin)
-    : stepTimer(40000000), startRequested(false)
+    : stepTimer(TIMER_APB_CLK_FREQ), startRequested(false)
 {
     driver = motorDriver;
     axisNumber = axis;
     direction.tracking = c_DIRECTION;
     dirPin = dirPinforAxis;
     invertDirectionPin = invertDirPin;
-    rate.tracking = TRACKING_RATE;
+    rate.tracking = trackingRates.getRate();
 
     pinMode(dirPin, OUTPUT);
 
