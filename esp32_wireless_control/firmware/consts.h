@@ -3,7 +3,7 @@
 
 #include "config.h"
 
-#define SIDERAL_DAY_MS 86164000UL
+#define SIDEREAL_DAY_MS 86164000UL
 #define SOLAR_DAY_MS 86400000UL
 #define LUNAR_DAY_MS 88253300UL
 
