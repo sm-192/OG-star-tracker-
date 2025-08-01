@@ -34,8 +34,4 @@
 #define STEPS_PER_TRACKER_FULL_REV_INT                                                             \
     ((STEPPER_STEPS_PER_REV * GEAR_RATIO_NUM * MAX_MICROSTEPS) / GEAR_RATIO_DEN)
 
-// Steps per second at 256 microstepping for sidereal tracking (calculated from system constants)
-// Formula: STEPS_PER_TRACKER_FULL_REV_INT / SIDERAL_DAY_MS * 1000
-#define STEPS_PER_SECOND_256MICROSTEP ((STEPS_PER_TRACKER_FULL_REV_INT * 1000UL) / SIDERAL_DAY_MS)
-
 #endif /* _CONSTS_H_ */

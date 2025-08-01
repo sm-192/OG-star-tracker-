@@ -161,6 +161,7 @@ void Axis::gotoTarget(uint64_t rateArg, const Position& current, const Position&
 {
     setMicrostep(TRACKER_MOTOR_MICROSTEPPING / 2);
     int64_t deltaArcseconds = target.arcseconds - current.arcseconds;
+    int64_t stepsPerSecond = trackingRates.getStepsPerSecondSolar();
 
     print_out_nonl("deltaArcseconds: %lld\n", deltaArcseconds);
 
@@ -176,13 +177,13 @@ void Axis::gotoTarget(uint64_t rateArg, const Position& current, const Position&
         }
     }
 
-    int64_t stepsToMove = (deltaArcseconds * STEPS_PER_SECOND_256MICROSTEP) /
-                          (MAX_MICROSTEPS / (microStep ? microStep : 1));
+    int64_t stepsToMove =
+        (deltaArcseconds * stepsPerSecond) / (MAX_MICROSTEPS / (microStep ? microStep : 1));
     bool directionTmp = (stepsToMove < 0) ^ direction.tracking;
 
     print_out_nonl("stepsToMove: %lld\n", stepsToMove);
 
-    setPosition(current.arcseconds * STEPS_PER_SECOND_256MICROSTEP);
+    setPosition(current.arcseconds * stepsPerSecond);
     resetAxisCount();
     setAxisTargetCount(stepsToMove);
 
