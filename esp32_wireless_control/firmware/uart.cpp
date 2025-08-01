@@ -55,7 +55,7 @@ void setup_uart(HardwareSerial* serial, long baudrate)
 {
     _uart = serial;
     _uart->begin(baudrate);
-    uartq = xQueueCreate(64, MAX_UART_LINE_LEN);
+    uartq = xQueueCreate(128, MAX_UART_LINE_LEN);
     uart_tx_mutex = xSemaphoreCreateMutex();
     uart_rx_mutex = xSemaphoreCreateMutex();
     xSemaphoreGive(uart_tx_mutex);

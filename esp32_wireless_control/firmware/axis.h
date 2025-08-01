@@ -98,6 +98,8 @@ class Axis
 
     void begin();
 
+    void print_status();
+
   private:
     void setDirection(bool directionArg);
     void setMicrostep(uint16_t microstep);

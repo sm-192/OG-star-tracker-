@@ -6,7 +6,7 @@
 
 #if MICROSTEPPING_MOTOR_DRIVER == USE_MSx_PINS_MICROSTEPPING
 #include "msx_motor_driver.h"
-MSxMotorDriver ra_driver(RA_MS1, RA_MS2);
+MSxMotorDriver ra_driver(RA_MS1, RA_MS2, AXIS1_DIR);
 #elif MICROSTEPPING_MOTOR_DRIVER == USE_TMC_DRIVER_MICROSTEPPING
 #include "tmc_motor_driver.h"
 TmcMotorDriver ra_driver(&AXIS_SERIAL_PORT, AXIS1_ADDR, TMC_R_SENSE, AXIS_RX, AXIS_TX);
@@ -40,7 +40,7 @@ void IRAM_ATTR stepTimerRA_ISR()
     }
 
     int64_t position = ra_axis.getPosition();
-    uint8_t uStep = ra_axis.getMicrostep();
+    uint16_t uStep = ra_axis.getMicrostep();
     if (ra_axis_step_phase)
     {
         if (ra_axis.direction.absolute ^ ra_axis.direction.tracking)
@@ -254,7 +254,7 @@ int64_t Axis::getAxisCount()
 void Axis::setDirection(bool directionArg)
 {
     direction.absolute = directionArg;
-    digitalWrite(dirPin, directionArg ^ invertDirectionPin);
+    driver->setDirection(directionArg ^ invertDirectionPin);
 }
 
 void Axis::setMicrostep(uint16_t microstep)
@@ -264,4 +264,9 @@ void Axis::setMicrostep(uint16_t microstep)
         microStep = microstep;
         driver->setMicrosteps(microstep);
     }
+}
+
+void Axis::print_status()
+{
+    driver->print_status();
 }

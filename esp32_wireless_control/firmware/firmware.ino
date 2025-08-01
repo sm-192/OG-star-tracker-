@@ -538,6 +538,10 @@ void setup()
     if (xTaskCreatePinnedToCore(webserverTask, "webserver", 4096, NULL, 1, NULL, 1))
         print_out_tbl(TSK_START_WEBSERVER);
 
+    // Give tasks time to fully initialize before starting axis
+    vTaskDelay(100);
+    print_out("Initializing axis with TMC driver...");
+
     ra_axis.begin();
 }
 
@@ -564,6 +568,7 @@ void loop()
             digitalWrite(STATUS_LED, ra_axis.trackingActive ? HIGH : LOW);
             delay_ticks = 1000; // Delay for 1 second
         }
+        ra_axis.print_status();
         vTaskDelay(delay_ticks);
     }
 }
