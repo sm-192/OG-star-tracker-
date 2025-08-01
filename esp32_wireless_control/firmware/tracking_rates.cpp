@@ -29,7 +29,7 @@ uint64_t TrackingRates::calculateTrackingRate(uint64_t period_ms)
 // Constructor - calculates all tracking rates
 TrackingRates::TrackingRates()
 {
-    sidereal_rate = calculateTrackingRate(SIDERAL_DAY_MS);
+    sidereal_rate = calculateTrackingRate(SIDEREAL_DAY_MS);
     solar_rate = calculateTrackingRate(SOLAR_DAY_MS);
     lunar_rate = calculateTrackingRate(LUNAR_DAY_MS);
     setRate(TRACKING_RATE); // Set initial rate based on TRACKING_RATE
@@ -54,7 +54,7 @@ void TrackingRates::setRate(TrackingRateType type)
 // Public functions to get steps per second at 256 microstepping
 uint64_t TrackingRates::getStepsPerSecondSidereal()
 {
-    return ((((uint64_t) STEPS_PER_TRACKER_FULL_REV_INT) * 1000ULL) / SIDERAL_DAY_MS);
+    return ((((uint64_t) STEPS_PER_TRACKER_FULL_REV_INT) * 1000ULL) / SIDEREAL_DAY_MS);
 }
 
 uint64_t TrackingRates::getStepsPerSecondSolar()

@@ -95,8 +95,8 @@ const char* germanLangHTMLStrings[numberOfHTMLStrings] = {
     "Links",                                        // STR_LEFT
     "Rechts",                                       // STR_RIGHT
     "Goto RA Control",                              // STR_GOTO_RA_CONTROL
-    "Goto RA Aktuell",                              // STR_GOTO_RA_CURRENT
-    "Goto RA Ziel",                                 // STR_GOTO_RA_TARGET
+    "Aktuell",                                      // STR_GOTO_RA_CURRENT
+    "Ziel",                                         // STR_GOTO_RA_TARGET
     "Richten Sie Ihre Kamera auf\n"
     "einen markanten Stern wie Deneb, Altair...\n"
     "und geben Sie dann die Koordinaten des Ziels ein\n", // STR_GOTO_RA_HINT
