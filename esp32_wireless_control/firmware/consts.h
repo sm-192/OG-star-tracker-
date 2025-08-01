@@ -18,9 +18,6 @@
 #define GEAR_RATIO_NUM 405 // 101.25 * 4 = 405
 #define GEAR_RATIO_DEN 4   // Denominator = 4
 
-// Motor microstepping configuration
-#define TRACKER_MOTOR_MICROSTEPPING 256
-
 #if STEPPER_TYPE == STEPPER_0_9
 // Define steps per revolution based on stepper type
 #define STEPPER_STEPS_PER_REV 400

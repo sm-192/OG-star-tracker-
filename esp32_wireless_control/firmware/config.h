@@ -34,6 +34,11 @@
 #define TRACKING_RATE TRACKING_SIDEREAL // default tracking rate
 #endif
 
+// Set the microstepping for the stepper motor
+#ifndef TRACKER_MOTOR_MICROSTEPPING
+#define TRACKER_MOTOR_MICROSTEPPING 64 // Default to 64 microstepping mode
+#endif
+
 // Configure the stepper motor type
 #ifndef STEPPER_TYPE
 #define STEPPER_TYPE STEPPER_0_9 // 0.9 degree stepper motor
