@@ -95,8 +95,8 @@ const char* chineseLangHTMLStrings[numberOfHTMLStrings] = {
     "Left",                     // STR_LEFT
     "Right",                    // STR_RIGHT
     "Goto RA Control",          // STR_GOTO_RA_CONTROL
-    "Goto RA Current",          // STR_GOTO_RA_CURRENT
-    "Goto RA Target",           // STR_GOTO_RA_TARGET
+    "Current",                  // STR_GOTO_RA_CURRENT
+    "Target",                   // STR_GOTO_RA_TARGET
     "将相机对准\n"
     "一颗容易辨认的恒星（如天津四、牛郎星等）\n"
     "然后输入目标坐标\n",      // STR_GOTO_RA_HINT

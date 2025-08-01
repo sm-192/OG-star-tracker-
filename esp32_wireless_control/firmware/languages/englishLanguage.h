@@ -95,8 +95,8 @@ const char* englishLangHTMLStrings[numberOfHTMLStrings] = {
     "Left",                          // STR_LEFT
     "Right",                         // STR_RIGHT
     "Goto RA Control",               // STR_GOTO_RA_CONTROL
-    "Goto RA Current",               // STR_GOTO_RA_CURRENT
-    "Goto RA Target",                // STR_GOTO_RA_TARGET
+    "Current",                       // STR_GOTO_RA_CURRENT
+    "Target",                        // STR_GOTO_RA_TARGET
     "Center your camera on\n"
     "memorable star like Deneb,Altair..\n"
     "then enter coordinates of target\n", // STR_GOTO_RA_HINT
