@@ -51,5 +51,21 @@ void TrackingRates::setRate(TrackingRateType type)
     }
 };
 
+// Public functions to get steps per second at 256 microstepping
+uint64_t TrackingRates::getStepsPerSecondSidereal()
+{
+    return ((((uint64_t) STEPS_PER_TRACKER_FULL_REV_INT) * 1000ULL) / SIDERAL_DAY_MS);
+}
+
+uint64_t TrackingRates::getStepsPerSecondSolar()
+{
+    return ((((uint64_t) STEPS_PER_TRACKER_FULL_REV_INT) * 1000ULL) / SOLAR_DAY_MS);
+}
+
+uint64_t TrackingRates::getStepsPerSecondLunar()
+{
+    return ((((uint64_t) STEPS_PER_TRACKER_FULL_REV_INT) * 1000ULL) / LUNAR_DAY_MS);
+}
+
 // Global instance of tracking rates
 TrackingRates trackingRates;

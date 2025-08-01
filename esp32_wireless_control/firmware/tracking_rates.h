@@ -34,6 +34,10 @@ class TrackingRates
         return current_rate;
     };
     void setRate(TrackingRateType type);
+
+    uint64_t getStepsPerSecondSidereal();
+    uint64_t getStepsPerSecondSolar();
+    uint64_t getStepsPerSecondLunar();
 };
 
 // Global instance for easy access
