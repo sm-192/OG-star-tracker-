@@ -494,7 +494,7 @@ void setup()
     setup_uart(&Serial, 115200);
 
     // start UART task before any usage of print_out
-    if (xTaskCreate(uartTask, "uart", 4096, NULL, 1, NULL))
+    if (xTaskCreatePinnedToCore(uartTask, "uart", 4096, NULL, 1, NULL, 1))
     {
         print_out_tbl(TSK_CLEAR_SCREEN);
         print_out_tbl(TSK_START_UART);
@@ -503,6 +503,8 @@ void setup()
     print_out_tbl(HEAD_LINE);
     print_out_tbl(HEAD_LINE_TRACKER);
     print_out("***         Running on %d MHz         ***", getCpuFrequencyMhz());
+    print_out("***     Dual Core Setup: ISR Core 0    ***");
+    print_out("***     Application Tasks on Core 1    ***");
     print_out_tbl(HEAD_LINE_VERSION);
 
     EEPROM.begin(512); // SIZE = 5 x presets = 5 x 32 bytes = 160 bytes
@@ -529,12 +531,12 @@ void setup()
     // Initialize the console serial
     setup_terminal(&term);
 
-    if (xTaskCreate(consoleTask, "console", 4096, NULL, 1, NULL))
+    if (xTaskCreatePinnedToCore(consoleTask, "console", 4096, NULL, 1, NULL, 1))
         print_out_tbl(TSK_START_CONSOLE);
 
-    if (xTaskCreate(intervalometerTask, "intervalometer", 4096, NULL, 1, NULL))
+    if (xTaskCreatePinnedToCore(intervalometerTask, "intervalometer", 4096, NULL, 1, NULL, 1))
         print_out_tbl(TSK_START_INTERVALOMETER);
-    if (xTaskCreatePinnedToCore(webserverTask, "webserver", 4096, NULL, 1, NULL, 0))
+    if (xTaskCreatePinnedToCore(webserverTask, "webserver", 4096, NULL, 1, NULL, 1))
         print_out_tbl(TSK_START_WEBSERVER);
 
     ra_axis.begin();
