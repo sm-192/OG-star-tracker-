@@ -80,11 +80,27 @@ class NGC2000 : public StarDatabaseInterface
     void printDatabaseInfo() const override;
     size_t getTotalObjectCount() const override;
 
+    // Pagination support
+    bool loadPage(size_t page_index, size_t page_size = 32) override;
+    bool isPageLoaded(size_t page_index) const override;
+    size_t getCurrentPageCount() const override;
+    size_t getPageSize() const override;
+    void clearLoadedPages() override;
+    void clearOldestPage(); // Helper to manage memory during search
+
   private:
     const uint8_t* _start; // Start of raw data
     const uint8_t* _end;   // End of raw data
     size_t _object_count;
-    std::vector<BinaryNGCEntry> _binary_entries;
+
+    // Pagination state
+    size_t _page_size;
+    std::vector<size_t> _loaded_pages;           // Track which pages are loaded
+    std::vector<BinaryNGCEntry> _binary_entries; // Now contains only loaded pages
+
+    // Binary format metadata
+    bool _is_compact;
+    size_t _header_size;
 
     // Helper methods
     bool begin_binary(const uint8_t* data, size_t len);
@@ -93,6 +109,15 @@ class NGC2000 : public StarDatabaseInterface
 
     bool parseObjectFromBinary(const struct BinaryNGCEntry& bin, NGCEntry& obj) const;
     bool convertNGCToUnified(const NGCEntry& ngc, StarUnifiedEntry& unified) const;
+
+    // Pagination helpers
+    size_t getPageForIndex(size_t global_index) const;
+    size_t getLocalIndexInPage(size_t global_index, size_t page_index) const;
+    bool loadObjectAtIndex(size_t global_index, BinaryNGCEntry& obj) const;
+
+    // Full catalog search methods
+    bool findByNameInAllPages(const String& name, StarUnifiedEntry& result) const;
+    bool findByNameFragmentInAllPages(const String& name_fragment, StarUnifiedEntry& result) const;
 };
 
 extern NGC2000 ngc2000;
