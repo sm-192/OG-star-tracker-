@@ -50,6 +50,13 @@ class StarDatabase
     // Information methods
     virtual size_t getTotalObjectCount() const;
     virtual void printDatabaseInfo() const;
+
+    // Pagination interface
+    virtual bool loadPage(size_t page_index, size_t page_size = 32);
+    virtual bool isPageLoaded(size_t page_index) const;
+    virtual size_t getCurrentPageCount() const;
+    virtual size_t getPageSize() const;
+    virtual void clearLoadedPages();
 };
 
 #endif // STAR_DATABASE_H

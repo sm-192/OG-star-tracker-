@@ -28,6 +28,40 @@ StarDatabase::StarDatabase(StarDatabaseType db_type, const uint8_t* start, const
     }
 }
 
+// Pagination interface
+bool StarDatabase::loadPage(size_t page_index, size_t page_size)
+{
+    if (_backend)
+        return _backend->loadPage(page_index, page_size);
+    return false;
+}
+
+bool StarDatabase::isPageLoaded(size_t page_index) const
+{
+    if (_backend)
+        return _backend->isPageLoaded(page_index);
+    return false;
+}
+
+size_t StarDatabase::getCurrentPageCount() const
+{
+    if (_backend)
+        return _backend->getCurrentPageCount();
+    return 0;
+}
+
+size_t StarDatabase::getPageSize() const
+{
+    if (_backend)
+        return _backend->getPageSize();
+    return 0;
+}
+
+void StarDatabase::clearLoadedPages()
+{
+    if (_backend)
+        _backend->clearLoadedPages();
+}
 StarDatabase::~StarDatabase()
 {
     delete _backend;
