@@ -557,6 +557,7 @@
             function handleLoad() {
                 requestFirmwareVersion();
                 changeMode();
+                handleCatalogChange();
 
                 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
@@ -725,6 +726,18 @@
                 }
             }
 
+            let currentFoundObject = null;
+
+            function handleCatalogChange() {
+                const catalogType = document.getElementById('star-catalog-select').value;
+                const setCurrentButton = document.getElementById('set-current-position');
+                document.getElementById('star-object-info').style.display = 'none';
+                document.getElementById('star-search-input').value = '';
+                document.getElementById('star-search-text').textContent = '%STR_STAR_SEARCH%';
+                currentFoundObject = null;
+                setCurrentButton.style.display = 'none';
+            }
+
             function sendSearchRequest() {
                 const catalogType = document.getElementById('star-catalog-select').value;
                 const searchTerm = document.getElementById('star-search-input').value.trim();
@@ -749,13 +762,16 @@
                         if (this.status == 200) {
                             try {
                                 const foundObject = JSON.parse(this.responseText);
-                                displayObjectInfo(foundObject);
+                                currentFoundObject = foundObject;
+                                displayObjectInfo(foundObject, catalogType);
                                 updateTargetRAFields(foundObject);
                                 found = foundObject && foundObject.name;
                             } catch (e) {
+                                currentFoundObject = null;
                                 displaySearchError('%STR_STAR_SEARCH_ERROR%');
                             }
                         } else {
+                            currentFoundObject = null;
                             displaySearchError('%STR_STAR_OBJECT_NOT_FOUND%');
                             const nullObject = { name: '', ra: 0, dec: 0 };
                             updateTargetRAFields(nullObject);
@@ -769,7 +785,7 @@
                 xhr.send();
             }
 
-            function displayObjectInfo(obj) {
+            function displayObjectInfo(obj, catalogType) {
                 const detailsDiv = document.getElementById('star-object-details');
                 if (!obj || !obj.name) {
                     displaySearchError('%STR_STAR_OBJECT_NOT_FOUND%');
@@ -790,12 +806,24 @@
 
                 detailsDiv.innerHTML = html;
                 document.getElementById('star-object-info').style.display = 'block';
+
+                // Show button only for BSC5 catalogs (values 3 and 4) when object is found with RA
+                const setCurrentButton = document.getElementById('set-current-position');
+                if ((catalogType === '3' || catalogType === '4') &&
+                    obj.ra !== undefined &&
+                    obj.ra !== null) {
+                    setCurrentButton.style.display = 'inline-block';
+                } else {
+                    setCurrentButton.style.display = 'none';
+                }
             }
 
             function displaySearchError(message) {
                 const detailsDiv = document.getElementById('star-object-details');
                 detailsDiv.innerHTML = message;
                 document.getElementById('star-object-info').style.display = 'block';
+                currentFoundObject = null;
+                handleCatalogChange();
             }
 
             function formatRA(raArcseconds) {
@@ -835,6 +863,26 @@
                 if (targetHoursInput) targetHoursInput.value = hours;
                 if (targetMinutesInput) targetMinutesInput.value = minutes;
                 if (targetSecondsInput) targetSecondsInput.value = seconds;
+
+                calculateRAInput();
+            }
+
+            function setCurrentToFoundObject() {
+                if (!currentFoundObject || currentFoundObject.ra === undefined || currentFoundObject.ra === null) {
+                    return;
+                }
+                const totalSeconds = currentFoundObject.ra;
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = Math.floor(totalSeconds % 60);
+
+                const currentHoursInput = document.getElementById('currentHours');
+                const currentMinutesInput = document.getElementById('currentMinutes');
+                const currentSecondsInput = document.getElementById('currentSeconds');
+
+                if (currentHoursInput) currentHoursInput.value = hours;
+                if (currentMinutesInput) currentMinutesInput.value = minutes;
+                if (currentSecondsInput) currentSecondsInput.value = seconds;
 
                 calculateRAInput();
             }
@@ -1024,7 +1072,7 @@
                 </div>
                 <div class="grid">
                     <h3>%STR_STAR_CATALOG%:</h3>
-                    <select aria-label="star_catalog" id='star-catalog-select'>
+                    <select aria-label="star_catalog" id='star-catalog-select' onchange="handleCatalogChange();">
                         <option value='1'>NGC2000</option>
                         <option value='2'>NGC2000 Compact</option>
                         <option value='3'>BSC5</option>
@@ -1034,16 +1082,20 @@
                     <input type='text' id='star-search-input'
                         placeholder='%STR_STAR_SEARCH_PLACEHOLDER%'
                         onkeypress="handleSearchKeyPress(event);">
-                    <button class="right-separator" type="button"
-                        id='star-search-button'
-                        onclick="sendSearchRequest();">
-                        <span id="star-search-text">%STR_STAR_SEARCH%</span>
-                        <span id="star-search-spinner" style="display:none; vertical-align:middle;">
-                            <svg width="16" height="16">
-                                <circle></circle>
-                            </svg>
-                        </span>
-                    </button>
+                    <div class="button-group">
+                        <button class="left-separator" type="button" id="set-current-position"
+                                onclick="setCurrentToFoundObject();">%STR_STAR_SET_CURRENT%</button>
+                        <button class="right-separator" type="button"
+                            id='star-search-button'
+                            onclick="sendSearchRequest();">
+                            <span id="star-search-text">%STR_STAR_SEARCH%</span>
+                            <span id="star-search-spinner" style="display:none; vertical-align:middle;">
+                                <svg width="16" height="16">
+                                    <circle></circle>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
                 </div>
                 <div id="star-search-results">
                     <div id="star-object-info" style="display: none;">

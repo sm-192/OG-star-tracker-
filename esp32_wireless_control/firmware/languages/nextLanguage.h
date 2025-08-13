@@ -122,6 +122,7 @@ const char* nextLangHTMLStrings[numberOfHTMLStrings] = {
     "", // STR_STAR_OBJECT_NAME
     "", // STR_STAR_SEARCH_PLACEHOLDER
     "", // STR_STAR_SEARCH
+    "", // STR_STAR_SET_CURRENT
     "", // STR_STAR_OBJECT_DETAILS
     "", // STR_STAR_SEARCH_ERROR
     "", // STR_STAR_OBJECT_NOT_FOUND

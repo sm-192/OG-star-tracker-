@@ -119,6 +119,7 @@ const char* chineseLangHTMLStrings[numberOfHTMLStrings] = {
     "天体名称",                                                           // STR_STAR_OBJECT_NAME
     "(例如: NGC224)", // STR_STAR_SEARCH_PLACEHOLDER
     "搜索",           // STR_STAR_SEARCH
+    "设置当前",       // STR_STAR_SET_CURRENT
     "天体详情",       // STR_STAR_OBJECT_DETAILS
     "搜索错误",       // STR_STAR_SEARCH_ERROR
     "未找到天体",     // STR_STAR_OBJECT_NOT_FOUND
