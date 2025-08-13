@@ -9,14 +9,57 @@
                 display: inline-block;
                 vertical-align: middle;
                 margin-left: 10px;
-                width: 24px;
-                height: 24px;
+                width: 16px;
+                height: 16px;
+            }
+            #star-search-text {
+                vertical-align: middle;
             }
             #star-search-spinner svg {
                 display: block;
                 width: 100%;
                 height: 100%;
                 animation: spinner-rotate 0.8s linear infinite;
+            }
+            #star-search-spinner svg circle {
+                cx: 8;
+                cy: 8;
+                r: 6;
+                fill: none;
+                stroke: black;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-dasharray: 12 12;
+            }
+            #slew-left-spinner,
+            #slew-right-spinner {
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 10px;
+                width: 16px;
+                height: 16px;
+            }
+            #slew-left-text,
+            #slew-right-text {
+                vertical-align: middle;
+            }
+            #slew-left-spinner svg,
+            #slew-right-spinner svg {
+                display: block;
+                width: 100%;
+                height: 100%;
+                animation: spinner-rotate 0.8s linear infinite;
+            }
+            #slew-left-spinner svg circle,
+            #slew-right-spinner svg circle {
+                cx: 8;
+                cy: 8;
+                r: 6;
+                fill: none;
+                stroke: black;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-dasharray: 12 12;
             }
             @keyframes spinner-rotate {
                 100% { transform: rotate(360deg); }
@@ -517,20 +560,46 @@
 
                 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-                document.querySelectorAll('#slew-btn').forEach(btn => {
+                document.querySelectorAll('#slew-left-btn, #slew-right-btn').forEach(btn => {
                     const dir = btn.dataset.dir;
+                    const textElementId = `slew-${dir}-text`;
+                    const spinnerElementId = `slew-${dir}-spinner`;
 
                     if (isTouchDevice){
-                        // Mobil
-                        btn.addEventListener('touchstart', () => sendSlewRequest(dir));
-                        btn.addEventListener('touchend', sendSlewStop);
-                        btn.addEventListener('touchcancel', sendSlewStop);
+                        // Mobile
+                        btn.addEventListener('touchstart', () => {
+                            document.getElementById(textElementId).style.display = 'none';
+                            document.getElementById(spinnerElementId).style.display = 'inline-block';
+                            sendSlewRequest(dir);
+                        });
+                        btn.addEventListener('touchend', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
+                        btn.addEventListener('touchcancel', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
                     }
                     else {
                         // Desktop
-                        btn.addEventListener('mousedown', () => sendSlewRequest(dir));
-                        btn.addEventListener('mouseup', sendSlewStop);
-                        btn.addEventListener('mouseleave', sendSlewStop);
+                        btn.addEventListener('mousedown', () => {
+                            document.getElementById(textElementId).style.display = 'none';
+                            document.getElementById(spinnerElementId).style.display = 'inline-block';
+                            sendSlewRequest(dir);
+                        });
+                        btn.addEventListener('mouseup', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
+                        btn.addEventListener('mouseleave', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
                     }
                 })
             }
@@ -904,10 +973,24 @@
                     <input id='custom-speed' type='number' value='2' min='2'
                         max='400' disabled>
 
-                    <button id="slew-btn" class="right-separator" type="button"
-                        data-dir="left">%STR_SLEW_LEFT%</button>
-                    <button id="slew-btn" class="left-separator" type="button"
-                        data-dir="right">%STR_SLEW_RIGHT%</button>
+                    <button id="slew-left-btn" class="right-separator" type="button"
+                        data-dir="left">
+                        <span id="slew-left-text">%STR_SLEW_LEFT%</span>
+                        <span id="slew-left-spinner" style="display:none; vertical-align:middle;">
+                            <svg width="16" height="16">
+                                <circle></circle>
+                            </svg>
+                        </span>
+                    </button>
+                    <button id="slew-right-btn" class="left-separator" type="button"
+                        data-dir="right">
+                        <span id="slew-right-text">%STR_SLEW_RIGHT%</span>
+                        <span id="slew-right-spinner" style="display:none; vertical-align:middle;">
+                            <svg width="16" height="16">
+                                <circle></circle>
+                            </svg>
+                        </span>
+                    </button>
                     <button type="button"
                         onclick="sendSlewStop()">%STR_ABORT_SLEW%</button>
                 </div>
@@ -956,8 +1039,8 @@
                         onclick="sendSearchRequest();">
                         <span id="star-search-text">%STR_STAR_SEARCH%</span>
                         <span id="star-search-spinner" style="display:none; vertical-align:middle;">
-                            <svg viewBox="0 0 50 50" width="24" height="24">
-                                <circle cx="25" cy="25" r="20" fill="none" stroke="#B10000" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4"/>
+                            <svg width="16" height="16">
+                                <circle></circle>
                             </svg>
                         </span>
                     </button>
