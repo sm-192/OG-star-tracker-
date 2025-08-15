@@ -78,11 +78,27 @@ class BSC5 : public StarDatabaseInterface
     void printDatabaseInfo() const override;
     size_t getTotalObjectCount() const override;
 
+    // Pagination support
+    bool loadPage(size_t page_index, size_t page_size = 32) override;
+    bool isPageLoaded(size_t page_index) const override;
+    size_t getCurrentPageCount() const override;
+    size_t getPageSize() const override;
+    void clearLoadedPages() override;
+    void clearOldestPage(); // Helper to manage memory during search
+
   private:
     const uint8_t* _start; // Start of raw data
     const uint8_t* _end;   // End of raw data
     size_t _star_count;
-    std::vector<BSC5Entry> _binary_entries;
+
+    // Pagination state
+    size_t _page_size;
+    std::vector<size_t> _loaded_pages;      // Track which pages are loaded
+    std::vector<BSC5Entry> _binary_entries; // Now contains only loaded pages
+
+    // Binary format metadata
+    bool _is_compact;
+    size_t _header_size;
 
     // Helper methods
     bool begin_binary(const uint8_t* data, size_t len);
@@ -91,6 +107,16 @@ class BSC5 : public StarDatabaseInterface
 
     bool parseStarFromBinary(size_t index, BSC5Entry& star) const;
     bool convertStarToUnified(const BSC5Entry& star, StarUnifiedEntry& unified) const;
+
+    // Pagination helpers
+    size_t calculateStarOffset(size_t star_index) const;
+    bool loadStarAtIndex(size_t global_index, BSC5Entry& star) const;
+    size_t getPageForIndex(size_t global_index) const;
+    size_t getLocalIndexInPage(size_t global_index, size_t page_index) const;
+
+    // Full catalog search methods
+    bool findByNameInAllPages(const String& name, StarUnifiedEntry& result) const;
+    bool findByNameFragmentInAllPages(const String& name_fragment, StarUnifiedEntry& result) const;
 };
 
 extern BSC5 bsc5;

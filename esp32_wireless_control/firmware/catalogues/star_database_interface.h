@@ -59,6 +59,13 @@ class StarDatabaseInterface
     virtual bool findByIndex(size_t index, StarUnifiedEntry& result) const = 0;
     virtual size_t getTotalObjectCount() const = 0;
     virtual void printDatabaseInfo() const = 0;
+
+    // Pagination support for memory optimization
+    virtual bool loadPage(size_t page_index, size_t page_size = 32) = 0;
+    virtual bool isPageLoaded(size_t page_index) const = 0;
+    virtual size_t getCurrentPageCount() const = 0;
+    virtual size_t getPageSize() const = 0;
+    virtual void clearLoadedPages() = 0;
 };
 
 #endif // STAR_DATABASE_INTERFACE_H

@@ -121,6 +121,7 @@ const char* germanLangHTMLStrings[numberOfHTMLStrings] = {
     "Objektname",                                         // STR_STAR_OBJECT_NAME
     "(z.B. NGC224)",                                      // STR_STAR_SEARCH_PLACEHOLDER
     "Suchen",                                             // STR_STAR_SEARCH
+    "Aktuell setzen",                                     // STR_STAR_SET_CURRENT
     "Objektdetails",                                      // STR_STAR_OBJECT_DETAILS
     "Suchfehler",                                         // STR_STAR_SEARCH_ERROR
     "Objekt nicht gefunden",                              // STR_STAR_OBJECT_NOT_FOUND

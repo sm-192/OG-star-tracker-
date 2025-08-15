@@ -5,6 +5,65 @@
         <meta charset='utf-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
         <style>
+            #star-search-spinner {
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 10px;
+                width: 16px;
+                height: 16px;
+            }
+            #star-search-text {
+                vertical-align: middle;
+            }
+            #star-search-spinner svg {
+                display: block;
+                width: 100%;
+                height: 100%;
+                animation: spinner-rotate 0.8s linear infinite;
+            }
+            #star-search-spinner svg circle {
+                cx: 8;
+                cy: 8;
+                r: 6;
+                fill: none;
+                stroke: black;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-dasharray: 12 12;
+            }
+            #slew-left-spinner,
+            #slew-right-spinner {
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 10px;
+                width: 16px;
+                height: 16px;
+            }
+            #slew-left-text,
+            #slew-right-text {
+                vertical-align: middle;
+            }
+            #slew-left-spinner svg,
+            #slew-right-spinner svg {
+                display: block;
+                width: 100%;
+                height: 100%;
+                animation: spinner-rotate 0.8s linear infinite;
+            }
+            #slew-left-spinner svg circle,
+            #slew-right-spinner svg circle {
+                cx: 8;
+                cy: 8;
+                r: 6;
+                fill: none;
+                stroke: black;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-dasharray: 12 12;
+            }
+            @keyframes spinner-rotate {
+                100% { transform: rotate(360deg); }
+            }
             :root {
                 --text: #B10000;
                 --secondary-text: #d63900;
@@ -498,23 +557,50 @@
             function handleLoad() {
                 requestFirmwareVersion();
                 changeMode();
+                handleCatalogChange();
 
                 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-                document.querySelectorAll('#slew-btn').forEach(btn => {
+                document.querySelectorAll('#slew-left-btn, #slew-right-btn').forEach(btn => {
                     const dir = btn.dataset.dir;
+                    const textElementId = `slew-${dir}-text`;
+                    const spinnerElementId = `slew-${dir}-spinner`;
 
                     if (isTouchDevice){
-                        // Mobil
-                        btn.addEventListener('touchstart', () => sendSlewRequest(dir));
-                        btn.addEventListener('touchend', sendSlewStop);
-                        btn.addEventListener('touchcancel', sendSlewStop);
+                        // Mobile
+                        btn.addEventListener('touchstart', () => {
+                            document.getElementById(textElementId).style.display = 'none';
+                            document.getElementById(spinnerElementId).style.display = 'inline-block';
+                            sendSlewRequest(dir);
+                        });
+                        btn.addEventListener('touchend', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
+                        btn.addEventListener('touchcancel', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
                     }
                     else {
                         // Desktop
-                        btn.addEventListener('mousedown', () => sendSlewRequest(dir));
-                        btn.addEventListener('mouseup', sendSlewStop);
-                        btn.addEventListener('mouseleave', sendSlewStop);
+                        btn.addEventListener('mousedown', () => {
+                            document.getElementById(textElementId).style.display = 'none';
+                            document.getElementById(spinnerElementId).style.display = 'inline-block';
+                            sendSlewRequest(dir);
+                        });
+                        btn.addEventListener('mouseup', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
+                        btn.addEventListener('mouseleave', () => {
+                            document.getElementById(textElementId).style.display = 'inline';
+                            document.getElementById(spinnerElementId).style.display = 'none';
+                            sendSlewStop();
+                        });
                     }
                 })
             }
@@ -640,6 +726,18 @@
                 }
             }
 
+            let currentFoundObject = null;
+
+            function handleCatalogChange() {
+                const catalogType = document.getElementById('star-catalog-select').value;
+                const setCurrentButton = document.getElementById('set-current-position');
+                document.getElementById('star-object-info').style.display = 'none';
+                document.getElementById('star-search-input').value = '';
+                document.getElementById('star-search-text').textContent = '%STR_STAR_SEARCH%';
+                currentFoundObject = null;
+                setCurrentButton.style.display = 'none';
+            }
+
             function sendSearchRequest() {
                 const catalogType = document.getElementById('star-catalog-select').value;
                 const searchTerm = document.getElementById('star-search-input').value.trim();
@@ -649,22 +747,37 @@
                     return;
                 }
 
+                var searchText = document.getElementById('star-search-text');
+                searchText.textContent = '%STR_STAR_SEARCH%';
+                searchText.style.display = 'none';
+                document.getElementById('star-search-spinner').style.display = 'inline-block';
+                document.getElementById('star-search-button').disabled = true;
                 const xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function () {
                     if (this.readyState == 4) {
+                        document.getElementById('star-search-spinner').style.display = 'none';
+                        document.getElementById('star-search-button').disabled = false;
+                        var searchText = document.getElementById('star-search-text');
+                        let found = false;
                         if (this.status == 200) {
                             try {
                                 const foundObject = JSON.parse(this.responseText);
-                                displayObjectInfo(foundObject);
+                                currentFoundObject = foundObject;
+                                displayObjectInfo(foundObject, catalogType);
                                 updateTargetRAFields(foundObject);
+                                found = foundObject && foundObject.name;
                             } catch (e) {
+                                currentFoundObject = null;
                                 displaySearchError('%STR_STAR_SEARCH_ERROR%');
                             }
                         } else {
+                            currentFoundObject = null;
                             displaySearchError('%STR_STAR_OBJECT_NOT_FOUND%');
                             const nullObject = { name: '', ra: 0, dec: 0 };
                             updateTargetRAFields(nullObject);
                         }
+                        searchText.textContent = found ? 'Found' : '%STR_STAR_SEARCH%';
+                        searchText.style.display = 'inline';
                     }
                 };
                 const url = '/starSearch?starCatalog=' + catalogType + '&starName=' + encodeURIComponent(searchTerm);
@@ -672,7 +785,7 @@
                 xhr.send();
             }
 
-            function displayObjectInfo(obj) {
+            function displayObjectInfo(obj, catalogType) {
                 const detailsDiv = document.getElementById('star-object-details');
                 if (!obj || !obj.name) {
                     displaySearchError('%STR_STAR_OBJECT_NOT_FOUND%');
@@ -693,12 +806,24 @@
 
                 detailsDiv.innerHTML = html;
                 document.getElementById('star-object-info').style.display = 'block';
+
+                // Show button only for BSC5 catalogs (values 3 and 4) when object is found with RA
+                const setCurrentButton = document.getElementById('set-current-position');
+                if ((catalogType === '3' || catalogType === '4') &&
+                    obj.ra !== undefined &&
+                    obj.ra !== null) {
+                    setCurrentButton.style.display = 'inline-block';
+                } else {
+                    setCurrentButton.style.display = 'none';
+                }
             }
 
             function displaySearchError(message) {
                 const detailsDiv = document.getElementById('star-object-details');
                 detailsDiv.innerHTML = message;
                 document.getElementById('star-object-info').style.display = 'block';
+                currentFoundObject = null;
+                handleCatalogChange();
             }
 
             function formatRA(raArcseconds) {
@@ -738,6 +863,26 @@
                 if (targetHoursInput) targetHoursInput.value = hours;
                 if (targetMinutesInput) targetMinutesInput.value = minutes;
                 if (targetSecondsInput) targetSecondsInput.value = seconds;
+
+                calculateRAInput();
+            }
+
+            function setCurrentToFoundObject() {
+                if (!currentFoundObject || currentFoundObject.ra === undefined || currentFoundObject.ra === null) {
+                    return;
+                }
+                const totalSeconds = currentFoundObject.ra;
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = Math.floor(totalSeconds % 60);
+
+                const currentHoursInput = document.getElementById('currentHours');
+                const currentMinutesInput = document.getElementById('currentMinutes');
+                const currentSecondsInput = document.getElementById('currentSeconds');
+
+                if (currentHoursInput) currentHoursInput.value = hours;
+                if (currentMinutesInput) currentMinutesInput.value = minutes;
+                if (currentSecondsInput) currentSecondsInput.value = seconds;
 
                 calculateRAInput();
             }
@@ -876,10 +1021,24 @@
                     <input id='custom-speed' type='number' value='2' min='2'
                         max='400' disabled>
 
-                    <button id="slew-btn" class="right-separator" type="button"
-                        data-dir="left">%STR_SLEW_LEFT%</button>
-                    <button id="slew-btn" class="left-separator" type="button"
-                        data-dir="right">%STR_SLEW_RIGHT%</button>
+                    <button id="slew-left-btn" class="right-separator" type="button"
+                        data-dir="left">
+                        <span id="slew-left-text">%STR_SLEW_LEFT%</span>
+                        <span id="slew-left-spinner" style="display:none; vertical-align:middle;">
+                            <svg width="16" height="16">
+                                <circle></circle>
+                            </svg>
+                        </span>
+                    </button>
+                    <button id="slew-right-btn" class="left-separator" type="button"
+                        data-dir="right">
+                        <span id="slew-right-text">%STR_SLEW_RIGHT%</span>
+                        <span id="slew-right-spinner" style="display:none; vertical-align:middle;">
+                            <svg width="16" height="16">
+                                <circle></circle>
+                            </svg>
+                        </span>
+                    </button>
                     <button type="button"
                         onclick="sendSlewStop()">%STR_ABORT_SLEW%</button>
                 </div>
@@ -913,7 +1072,7 @@
                 </div>
                 <div class="grid">
                     <h3>%STR_STAR_CATALOG%:</h3>
-                    <select aria-label="star_catalog" id='star-catalog-select'>
+                    <select aria-label="star_catalog" id='star-catalog-select' onchange="handleCatalogChange();">
                         <option value='1'>NGC2000</option>
                         <option value='2'>NGC2000 Compact</option>
                         <option value='3'>BSC5</option>
@@ -923,9 +1082,20 @@
                     <input type='text' id='star-search-input'
                         placeholder='%STR_STAR_SEARCH_PLACEHOLDER%'
                         onkeypress="handleSearchKeyPress(event);">
-                    <button class="right-separator" type="button"
-                        id='star-search-button'
-                        onclick="sendSearchRequest();">%STR_STAR_SEARCH%</button>
+                    <div class="button-group">
+                        <button class="left-separator" type="button" id="set-current-position"
+                                onclick="setCurrentToFoundObject();">%STR_STAR_SET_CURRENT%</button>
+                        <button class="right-separator" type="button"
+                            id='star-search-button'
+                            onclick="sendSearchRequest();">
+                            <span id="star-search-text">%STR_STAR_SEARCH%</span>
+                            <span id="star-search-spinner" style="display:none; vertical-align:middle;">
+                                <svg width="16" height="16">
+                                    <circle></circle>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
                 </div>
                 <div id="star-search-results">
                     <div id="star-object-info" style="display: none;">
