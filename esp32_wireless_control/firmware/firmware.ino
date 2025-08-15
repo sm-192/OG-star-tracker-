@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "axis.h"
+#include "catalogues/star_database.h"
 #include "commands.h"
 #include "common_strings.h"
 #include "config.h"
@@ -20,6 +21,7 @@
 SerialTerminal term(CLI_NEWLINE_CHAR, CLI_DELIMITER_CHAR);
 WebServer server(WEBSERVER_PORT);
 Languages language = EN;
+StarDatabase* starDatabase = nullptr;
 
 void uartTask(void* pvParameters);
 void consoleTask(void* pvParameters);
@@ -28,6 +30,80 @@ void intervalometerTask(void* pvParameters);
 
 extern const uint8_t interface_index_html_start[] asm("_binary_interface_index_html_start");
 extern const uint8_t interface_index_html_end[] asm("_binary_interface_index_html_end");
+
+extern const uint8_t _catalogues_ngc_converted_ngc2000_bin_start[] asm(
+    "_binary_catalogues_ngc_converted_ngc2000_bin_start");
+extern const uint8_t _catalogues_ngc_converted_ngc2000_bin_end[] asm(
+    "_binary_catalogues_ngc_converted_ngc2000_bin_end");
+
+extern const uint8_t _catalogues_ngc_converted_ngc2000_compact_bin_start[] asm(
+    "_binary_catalogues_ngc_converted_ngc2000_compact_bin_start");
+extern const uint8_t _catalogues_ngc_converted_ngc2000_compact_bin_end[] asm(
+    "_binary_catalogues_ngc_converted_ngc2000_compact_bin_end");
+
+extern const uint8_t _catalogues_bsc5_converted_bsc5ra_bin_start[] asm(
+    "_binary_catalogues_bsc5_converted_bsc5ra_bin_start");
+extern const uint8_t _catalogues_bsc5_converted_bsc5ra_bin_end[] asm(
+    "_binary_catalogues_bsc5_converted_bsc5ra_bin_end");
+
+extern const uint8_t _catalogues_bsc5_converted_bsc5ra_compact_bin_start[] asm(
+    "_binary_catalogues_bsc5_converted_bsc5ra_compact_bin_start");
+extern const uint8_t _catalogues_bsc5_converted_bsc5ra_compact_bin_end[] asm(
+    "_binary_catalogues_bsc5_converted_bsc5ra_compact_bin_end");
+
+StarDatabase* handleStarDatabase(StarDatabaseType type)
+{
+    StarDatabase* db = nullptr;
+    const uint8_t* bin_start = nullptr;
+    const uint8_t* bin_end = nullptr;
+    size_t len = 0;
+
+    if (starDatabase != nullptr && starDatabase->getDatabaseType() == type)
+        return starDatabase; // Return existing instance if already loaded
+
+    if (starDatabase != nullptr)
+    {
+        starDatabase->unloadDatabase();
+        delete starDatabase;
+        starDatabase = nullptr;
+    }
+
+    switch (type)
+    {
+        case DB_NGC2000:
+            bin_start = _catalogues_ngc_converted_ngc2000_bin_start;
+            bin_end = _catalogues_ngc_converted_ngc2000_bin_end;
+            len = bin_end - bin_start;
+            break;
+        case DB_NGC2000_COMPACT:
+            bin_start = _catalogues_ngc_converted_ngc2000_compact_bin_start;
+            bin_end = _catalogues_ngc_converted_ngc2000_compact_bin_end;
+            len = bin_end - bin_start;
+            break;
+        case DB_BSC5:
+            bin_start = _catalogues_bsc5_converted_bsc5ra_bin_start;
+            bin_end = _catalogues_bsc5_converted_bsc5ra_bin_end;
+            len = bin_end - bin_start;
+            break;
+        case DB_BSC5_COMPACT:
+            bin_start = _catalogues_bsc5_converted_bsc5ra_compact_bin_start;
+            bin_end = _catalogues_bsc5_converted_bsc5ra_compact_bin_end;
+            len = bin_end - bin_start;
+            break;
+        default:
+            print_out("Error: Unsupported database type %d", type);
+            return nullptr;
+    }
+
+    db = new StarDatabase(type, bin_start, bin_end);
+    if (!db->loadDatabase((const char*) bin_start, len))
+    {
+        delete db;
+        return nullptr;
+    }
+
+    return db;
+}
 
 // Handle requests to the root URL ("/")
 void handleRoot()
@@ -414,6 +490,53 @@ void handleVersion()
     server.send(200, MIME_TYPE_TEXT, (String) INTERNAL_VERSION);
 }
 
+void handleCatalogSearch()
+{
+    StarDatabaseType catalogType = (StarDatabaseType) server.arg(STAR_CATALOG).toInt();
+    String objectName = server.arg(STAR_NAME);
+
+    starDatabase = handleStarDatabase(catalogType);
+
+#if DEBUG == 1
+    print_out("Received catalog=%d, name=%s", catalogType, objectName.c_str());
+#endif
+
+    if (objectName.length() == 0)
+    {
+        server.send(400, MIME_TYPE_TEXT, "Object name required");
+        return;
+    }
+
+    StarUnifiedEntry foundObject;
+    bool found = starDatabase->findByName(objectName.c_str(), foundObject);
+
+    if (found)
+    {
+        JsonDocument objectData;
+        String json;
+        objectData["name"] = foundObject.name;
+        objectData["ra"] = (long long) (foundObject.ra_hours * 3600.0);
+        objectData["dec"] = (long long) (foundObject.dec_deg * 3600.0);
+        objectData["type"] = foundObject.type_str;
+        objectData["magnitude"] = foundObject.magnitude;
+        objectData["constellation"] = foundObject.constellation;
+        serializeJson(objectData, json);
+
+#if DEBUG == 1
+        print_out("Found object: %s at RA=%.2fh, Dec=%.2f°", foundObject.name.c_str(),
+                  foundObject.ra_hours, foundObject.dec_deg);
+#endif
+        server.send(200, MIME_APPLICATION_JSON, json);
+    }
+    else
+    {
+#if DEBUG == 1
+        print_out("Object not found: %s", objectName.c_str());
+#endif
+        server.send(404, "text/plain", "Object not found");
+    }
+}
+
 void setupWireless()
 {
 #ifdef AP_MODE
@@ -461,7 +584,7 @@ void setupWireless()
     server.on("/abort-goto-ra", HTTP_GET, handleAbortGoToRA);
     server.on("/version", HTTP_GET, handleVersion);
     server.on("/setlang", HTTP_GET, handleSetLanguage);
-
+    server.on("/starSearch", HTTP_GET, handleCatalogSearch);
     // Start the server
     server.begin();
 
