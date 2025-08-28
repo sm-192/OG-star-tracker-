@@ -1,0 +1,9 @@
+Comando para enviar as alterações feitas para o meu fork:
+- git push origin nome-da-branch --force-with-lease
+
+Atualizar o repositório original
+- git checkout nome-da-branch
+- git pull upstream nome-da-branch --rebase
+
+Alternar entre branches
+- git checkout nome-da-branch
